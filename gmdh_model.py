@@ -79,7 +79,6 @@ class DataSetType(Enum):
 
 
 class CriterionType(Enum):
-    cmpTrain = 0
     cmpTest = 1
     cmpBias = 2
     cmpComb_train_bias = 3
@@ -88,9 +87,7 @@ class CriterionType(Enum):
 
     @classmethod
     def get_name(cls, value):
-        if value == cls.cmpTrain:
-            return 'train error comparison'
-        elif value == cls.cmpTest:
+        if value == cls.cmpTest:
             return 'test error comparison'
         elif value == cls.cmpBias:
             return 'bias error comparison'
@@ -125,7 +122,7 @@ class Model:
         self.transfer = self._transfer_dummy            # transfer function
 
     @classmethod
-    def _transfer_dummy(cls, u1: float, u2: float, w: ndarray):
+    def _transfer_dummy(cls, u1, u2, w):
         return 0
 
     def get_error(self):
@@ -133,8 +130,6 @@ class Model:
         """
         if self.gmdh.param.criterion_type == CriterionType.cmpTest:
             return self.test_err
-        elif self.gmdh.param.criterion_type == CriterionType.cmpTrain:
-            return self.train_err
         elif self.gmdh.param.criterion_type == CriterionType.cmpBias:
             return self.bias_err
         elif self.gmdh.param.criterion_type == CriterionType.cmpComb_train_bias:
@@ -146,12 +141,12 @@ class Model:
         else:
             return sys.float_info.max
 
-    def mse(self, x: ndarray, y: ndarray, w: ndarray):
+    def mse(self, x, y, w):
         """Calculation of error using MSE criterion
         """
         sy = 0
         data_len = x.shape[0]
-        yt = np.empty((data_len,), dtype=float)
+        yt = np.empty((data_len,), dtype=np.double)
         x1 = x[:, self.u1_index]
         x2 = x[:, self.u2_index]
         for m in range(0, data_len):
@@ -164,7 +159,7 @@ class Model:
         err = math.sqrt(s)
         return err
 
-    def bias(self, train_x: ndarray, test_x: ndarray, train_y: ndarray, test_y: ndarray):
+    def bias(self, train_x, test_x, train_y, test_y):
         """Calculation of error using of bias criterion
         """
         s = 0
@@ -175,8 +170,8 @@ class Model:
         data_len = n_train + n_test
         x1 = train_x[:, self.u1_index]
         x2 = train_x[:, self.u2_index]
-        yta = np.empty((n_train,), dtype=float)
-        ytb = np.empty((n_train,), dtype=float)
+        yta = np.empty((n_train,), dtype=np.double)
+        ytb = np.empty((n_train,), dtype=np.double)
         for m in range(0, n_train):
             yta[m] = self.transfer(x1[m], x2[m], self.w)
             ytb[m] = self.transfer(x1[m], x2[m], self.wt)
@@ -185,8 +180,8 @@ class Model:
 
         x1 = test_x[:, self.u1_index]
         x2 = test_x[:, self.u2_index]
-        yta = np.empty((n_test,), dtype=float)
-        ytb = np.empty((n_test,), dtype=float)
+        yta = np.empty((n_test,), dtype=np.double)
+        ytb = np.empty((n_test,), dtype=np.double)
         for m in range(0, n_test):
             yta[m] = self.transfer(x1[m], x2[m], self.w)
             ytb[m] = self.transfer(x1[m], x2[m], self.wt)
@@ -231,23 +226,23 @@ class PolynomModel(Model):
         self.ftype = ftype
         self.fw_size = 0
         self.set_type(ftype)
-        self.w = np.array([self.fw_size], dtype=float)
-        self.wt = np.array([self.fw_size], dtype=float)
+        self.w = np.array([self.fw_size], dtype=np.double)
+        self.wt = np.array([self.fw_size], dtype=np.double)
 
     @classmethod
-    def _transfer_linear(cls, u1: float, u2: float, w: ndarray):
+    def _transfer_linear(cls, u1, u2, w):
         return w[0] + w[1]*u1 + w[2]*u2
     
     @classmethod
-    def _transfer_linear_perm(cls, u1: float, u2: float, w: ndarray):
+    def _transfer_linear_perm(cls, u1, u2, w):
         return w[0] + u1*(w[1] + w[3]*u2) + w[2]*u2
     
     @classmethod
-    def _transfer_quadratic(cls, u1: float, u2: float, w: ndarray):
+    def _transfer_quadratic(cls, u1, u2, w):
         return w[0] + u1*(w[1] + w[3]*u2 + w[4]*u1) + u2*(w[2] + w[5]*u2)
     
     @classmethod
-    def _transfer_cubic(cls, u1: float, u2: float, w: ndarray):
+    def _transfer_cubic(cls, u1, u2, w):
         u1_sq = u1*u1
         u2_sq = u2*u2
         return w[0] + w[1]*u1 + w[2]*u2 + w[3]*u1*u2 + w[4]*u1_sq + w[5]*u2_sq + \
@@ -337,7 +332,7 @@ class Layer(list):
         self.valid = True
         self.input_index_set = set([])
 
-    def add_polynomial_model(self, index_u1: int, index_u2: int, ftype: RefFunctionType):
+    def add_polynomial_model(self, index_u1, index_u2, ftype):
         """Add polynomial model to the layer
         """
         self.add(PolynomModel(self.gmdh, self.layer_index, index_u1, index_u2, ftype, len(self)))
@@ -354,13 +349,13 @@ class Layer(list):
                 s += '\n'
         return s
 
-    def add(self, model: Model):
+    def add(self, model):
         model.model_index = len(self)
         self.append(model)
         self.input_index_set.add(model.u1_index)
         self.input_index_set.add(model.u2_index)
 
-    def delete(self, index: int):
+    def delete(self, index):
         self.pop(index)
         for n in range(index, len(self)):
             self[n].model_index = n

@@ -112,5 +112,6 @@ plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
 
 #print(gmdh)
 PlotGMDH(gmdh, filename='img/iris_model', plot_model_name=True, view=True)
+gmdh.plot_layer_error()
 #plt.show()
 

@@ -12,7 +12,8 @@ from numpy import ndarray
 import sys
 from gmdh_model import RefFunctionType, CriterionType, SequenceTypeSet, SequenceTypeError
 from gmdh_model import DataSetType, Model, PolynomModel, Layer, LayerCreationError
-
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 
 # **********************************************************************************************************************
 #   implementation of multilayer GMDH algorithm
@@ -37,8 +38,6 @@ class MultilayerGMDHparam:
     the following criteria are possible:
         cmpTest: the default value,
             models are compared on the basis of test error
-        cmpTrain: models are compared on the basis of train error. Use with caution,
-            limit the maximum number of layers to avoid mostly infinite loop of layer creation
         cmpBias: models are compared on the basis of bias error
         cmpComb_train_bias: combined criterion, models are compared on the basis of bias and train errors
         cmpComb_test_bias: combined criterion, models are compared on the basis of bias and test errors
@@ -73,7 +72,7 @@ class MultilayerGMDHparam:
         sqCustom -  custom way to split data to train and test
                     set_custom_seq_type has to be provided
                     Example:
-                    def my_set_custom_sequence_type(seq_types: ndarray):
+                    def my_set_custom_sequence_type(seq_types):
                         r = np.random.uniform(-1, 1, seq_types.shape)
                         seq_types[:] = np.where(r > 0, DataSetType.dsTrain, DataSetType.dsTest)
                     gmdh.param.seq_type = SequenceTypeSet.sqCustom
@@ -127,7 +126,7 @@ class MultilayerGMDHparam:
         self.ref_function_types = set([RefFunctionType.rfLinearPerm])
 
     @classmethod
-    def __dummy_set_custom_sequence_type(cls, seq_types: ndarray):
+    def __dummy_set_custom_sequence_type(cls, seq_types):
         raise SequenceTypeError('param.set_custom_seq_type function is not provided')
 
 
@@ -147,21 +146,21 @@ class BaseMultilayerGMDH:
 
         # array specified how the original data will be divided into train and test data sets
         self.seq_types = np.array([], dtype=DataSetType)
-        self.data_x = np.array([], dtype=float)             # array of original data samples
-        self.data_y = np.array([], dtype=float)             # array of original target samples
-        self.input_train_x = np.array([], dtype=float)      # array of original train samples
-        self.input_test_x = np.array([], dtype=float)       # array of original test samples
-        self.train_y = np.array([], dtype=float)            # array of train targets
-        self.test_y = np.array([], dtype=float)             # array of test targets
+        self.data_x = np.array([], dtype=np.double)             # array of original data samples
+        self.data_y = np.array([], dtype=np.double)             # array of original target samples
+        self.input_train_x = np.array([], dtype=np.double)      # array of original train samples
+        self.input_test_x = np.array([], dtype=np.double)       # array of original test samples
+        self.train_y = np.array([], dtype=np.double)            # array of train targets
+        self.test_y = np.array([], dtype=np.double)             # array of test targets
 
-        self.train_x = np.array([], dtype=float)            # array of train samples for current layer
-        self.test_x = np.array([], dtype=float)             # array of test samples for current layer
-        self.layer_data_x = np.array([], dtype=float)       # array of total samples for current layer
+        self.train_x = np.array([], dtype=np.double)            # array of train samples for current layer
+        self.test_x = np.array([], dtype=np.double)             # array of test samples for current layer
+        self.layer_data_x = np.array([], dtype=np.double)       # array of total samples for current layer
 
-        self.layer_err = np.array([], dtype=float)          # array of layer's errors
+        self.layer_err = np.array([], dtype=np.double)          # array of layer's errors
         self.valid = False
 
-    def _select_best_models(self, layer: Layer):
+    def _select_best_models(self, layer):
         """
         Select l_count the best models from the list
         """
@@ -242,7 +241,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         return s
 
     @classmethod
-    def set_matrix_a(cls, model: PolynomModel, source: ndarray, source_y: ndarray, a: ndarray, y: ndarray):
+    def set_matrix_a(cls, model, source, source_y, a, y):
         """
         function set matrix value required to calculate polynom model coefficient
         by multiple linear regression
@@ -325,8 +324,8 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         Train model on total (original) data set (train and test sets)
         """
         data_len = self.n_train + self.n_test
-        a = np.empty((data_len, model.fw_size), dtype=float)
-        y = np.empty((data_len,), dtype=float)
+        a = np.empty((data_len, model.fw_size), dtype=np.double)
+        y = np.empty((data_len,), dtype=np.double)
         self.set_matrix_a(model, self.layer_data_x, self.data_y, a, y)
         # Train the model using all data (train and test sets)
         try:
@@ -334,14 +333,14 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         except:
             raise LayerCreationError('Error executing linalg on train data set', layer.layer_index)
 
-    def _sub_calculate_model_weights(self, from_m: int, to_m: int, layer: Layer):
+    def _sub_calculate_model_weights(self, from_m, to_m, layer):
         """
         Calculate model coefficients
         """
 
         # declare Y variables of multiple linear regression for train and test targets
-        ya = np.empty((self.n_train,), dtype=float)
-        yb = np.empty((self.n_test,), dtype=float)
+        ya = np.empty((self.n_train,), dtype=np.double)
+        yb = np.empty((self.n_test,), dtype=np.double)
         min_rank = 2
 
         # loop for all models in the layer starting from 'from_m' to 'to_m'
@@ -349,8 +348,8 @@ class MultilayerGMDH(BaseMultilayerGMDH):
             model = layer[n]
             if isinstance(model, PolynomModel):
                 # declare X variables of multiple linear regression for train and test targets
-                a = np.empty((self.n_train, model.fw_size), dtype=float)
-                b = np.empty((self.n_test, model.fw_size), dtype=float)
+                a = np.empty((self.n_train, model.fw_size), dtype=np.double)
+                b = np.empty((self.n_test, model.fw_size), dtype=np.double)
 
                 # set X and Y variables of multiple linear regression
                 self.set_matrix_a(model, self.train_x, self.train_y, a, ya)
@@ -382,7 +381,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                     model.train_err = model.mse(self.train_x, self.train_y, model.w)
                     model.test_err = model.mse(self.test_x, self.test_y, model.wt)
 
-    def _calculate_model_weights(self, layer: Layer):
+    def _calculate_model_weights(self, layer):
         """
         Calculate model coefficients
         """
@@ -434,7 +433,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         return layer
 
-    def _set_internal_data(self, layer: Layer, data, x):
+    def _set_internal_data(self, layer, data, x):
         """
         Compute inputs(features) for the layer
         data - original features of algorithm, the dimensionality is (data size) х (number of original features)
@@ -452,7 +451,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
             n = layer.l_count
             if self.param.admix_features:
                 n += data.shape[1]
-            out_x = np.zeros([data_m, n], dtype=float)
+            out_x = np.zeros([data_m, n], dtype=np.double)
             for i in range(0, data_m):
                 for j in range(0, layer.l_count):
                     # loop for selected best models
@@ -484,7 +483,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
             else:
                 raise SequenceTypeError('Unknown type of data division generated by set_custom_seq_type function')
 
-    def _set_sequence_type(self, seq_type: ndarray, data_len: int):
+    def _set_sequence_type(self, seq_type, data_len):
         """
         Set seq_types array that will be used to divide data set to train and test ones
         """
@@ -552,14 +551,14 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                 y[j] = self.data_y[i]
                 j += 1
 
-    def _model_not_in_use(self, model: Model):
+    def _model_not_in_use(self, model):
         if model.layer_index == len(self.layers)-1:
             return model.model_index > 0
         else:
             next_layer = self.layers[model.layer_index+1]
             return model.model_index not in next_layer.input_index_set
 
-    def _delete_unused_model(self, model: PolynomModel):
+    def _delete_unused_model(self, model):
         """
         Delete unused model from layer
         """
@@ -622,7 +621,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
                 min_error = min(min_error, layer.err)
 
-                # if error does decrease anymore or number of layers reached the limit
+                # if error does not decrease anymore or number of layers reached the limit
                 # or the layer does not have any valid model - stop training
                 if error_stopped_decrease or not (layer.layer_index < self.param.max_layer_count-1) or \
                         not layer.valid:
@@ -656,10 +655,10 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         self.l_count = self.n_features
 
         # allocate arrays for train and test sets
-        self.input_train_x = np.empty((self.n_train, self.n_features), dtype=float)
-        self.train_y = np.empty((self.n_train,), dtype=float)
-        self.input_test_x = np.empty((self.n_test, self.n_features), dtype=float)
-        self.test_y = np.empty((self.n_test,), dtype=float)
+        self.input_train_x = np.empty((self.n_train, self.n_features), dtype=np.double)
+        self.train_y = np.empty((self.n_train,), dtype=np.double)
+        self.input_test_x = np.empty((self.n_test, self.n_features), dtype=np.double)
+        self.test_y = np.empty((self.n_test,), dtype=np.double)
 
         # set train and test data sets
         self._set_sequence(self.input_train_x, self.train_y, DataSetType.dsTrain)
@@ -707,7 +706,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         if self.n_test == 0:
             raise ValueError('Error: test data set size is zero')
 
-    def _predict_check(self, predict_data_x: ndarray):
+    def _predict_check(self, predict_data_x):
         """
         Check input data
         """
@@ -729,7 +728,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
     # *************************************************************
     #                   public methods
     # *************************************************************
-    def fit(self, data_x: ndarray, data_y: ndarray):
+    def fit(self, data_x, data_y):
         """
         Fit multilayer group method of data handling algorithm (model)
 
@@ -761,7 +760,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         self._train_gmdh()
         return self
 
-    def predict(self, input_data_x: ndarray):
+    def predict(self, input_data_x):
         """
         Predict using multilayer group method of data handling algorithm (model)
 
@@ -805,7 +804,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         # calculate output for the last layer
         # we choose the first (best) model of the last layer as output of multilayer gmdh
-        output_y = np.zeros([data_len], dtype=float)
+        output_y = np.zeros([data_len], dtype=np.double)
         model = self.layers[-1][0]
         for i in range(0, input_data_x.shape[0]):
             u1 = layer_data_x[i, model.u1_index]
@@ -840,7 +839,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                         selected_features_set.add(u2_index)
         return list(selected_features_set)
 
-    def _get_n_featuresames(self, features_set: list):
+    def _get_n_featuresames(self, features_set):
         """
         Return names of features
         """
@@ -892,6 +891,21 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         return self._get_n_featuresames(self.get_selected_features())
 
 
+    def plot_layer_error(self):
+        """Plot layer error on test set vs layer index
+        """
+
+        y = self.layer_err
+        x = range(0, y.shape[0])
+        ax1 = plt.subplot(111)
+        ax1.plot(x, y)
+        ax1.set_title('Layer error on test set')
+        plt.xlabel('layer index')
+        plt.ylabel('mse')
+        idx = len(self.layers)-1
+        # plt.ion()
+        plt.plot(x[idx], y[idx], 'rD')
+        plt.show()
 
         #start_time = timeit.default_timer()
         #elapsed = timeit.default_timer() - start_time
