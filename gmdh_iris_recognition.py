@@ -13,7 +13,7 @@ iris = datasets.load_iris()
 print(iris.data.shape)
 
 
-def iris_class(value: float):
+def iris_class(value):
     if value > 1.5:
         return 2
     elif value <= 1.5 and value >= 0.5:
@@ -112,6 +112,6 @@ plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
 
 #print(gmdh)
 PlotGMDH(gmdh, filename='img/iris_model', plot_model_name=True, view=True)
-gmdh.plot_layer_error()
-#plt.show()
+# gmdh.plot_layer_error()
+plt.show()
 

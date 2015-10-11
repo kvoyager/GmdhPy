@@ -27,7 +27,7 @@ class GMDHCheckError(Exception):
         super(GMDHCheckError, self).__init__(message)
 
 
-class MultilayerGMDHparam:
+class MultilayerGMDHparam(object):
     """
     Parameters of GMDH algorithm
     ----------------------------
@@ -130,7 +130,7 @@ class MultilayerGMDHparam:
         raise SequenceTypeError('param.set_custom_seq_type function is not provided')
 
 
-class BaseMultilayerGMDH:
+class BaseMultilayerGMDH(object):
     """
     Base class for multilayer group method of data handling algorithm
     """
@@ -215,7 +215,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
     """
 
     def __init__(self):
-        super(MultilayerGMDH, self).__init__()
+        super(self.__class__, self).__init__()
 
     def __repr__(self):
         st = '*********************************************\n'
@@ -434,11 +434,11 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         return layer
 
     def _set_internal_data(self, layer, data, x):
-        """
-        Compute inputs(features) for the layer
-        data - original features of algorithm, the dimensionality is (data size) х (number of original features)
+        """Compute inputs(features) for the layer sdfas
+        data - original features of algorithm , the dimensionality is (data size) x (number of original features)
         x is the output of selected models from the previous layer
         """
+
         data_m = data.shape[0]
         if layer is None:
             # we are dealing with the first layer, its features are original features of the algorithm
@@ -598,7 +598,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         min_error = sys.float_info.max
         error_stopped_decrease = False
-        self.layers.clear()
+        del self.layers[:]
         self.valid = False
         error_min_index = 0
 

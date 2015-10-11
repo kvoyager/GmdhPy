@@ -15,7 +15,7 @@ class PlotGMDH:
     """
 
     """
-    def __init__(self, gmdh: MultilayerGMDH, filename, plot_model_name=False, view=False):
+    def __init__(self, gmdh, filename, plot_model_name=False, view=False):
         self.g = gv.Digraph(format='svg')
         self.output = 'OUTPUT'
         self.gmdh = gmdh
@@ -50,20 +50,20 @@ class PlotGMDH:
                                  fontsize='18')
         self.plot_gmdh(gmdh, filename, view)
 
-    def get_feature_name(self, index: int):
+    def get_feature_name(self, index):
         s = 'F{0}'.format(index)
         if len(self.gmdh.feature_names) > 0:
             s += '\n{0}'.format(self.gmdh.feature_names[index])
         return s
 
-    def get_model_name(self, model: Model):
+    def get_model_name(self, model):
         s = 'layer {0}\nmodel {1}'.format(model.layer_index, model.model_index, model.get_name())
         if self.plot_model_name:
             s += '\n{0}'.format(model.get_short_name())
         return s
 
     @classmethod
-    def get_feature_index(cls, model: Model, u_index: int):
+    def get_feature_index(cls, model, u_index):
         if model.layer_index == 0:
             return True, u_index
         else:
@@ -73,7 +73,7 @@ class PlotGMDH:
             else:
                 return True, u_index - len(prev_layer)
 
-    def add_connection(self, model: Model, u_index: int):
+    def add_connection(self, model, u_index):
         input_is_original_feature, feature_index = self.get_feature_index(model, u_index)
         if input_is_original_feature:
             return self.add_edge(self.get_feature_name(feature_index), self.get_model_name(model))
@@ -85,7 +85,7 @@ class PlotGMDH:
     def add_edge(self, a, b):
         return self.g.edge(a, b, color=self.connection_color, fillcolor=self.connection_fill_color, weight='1')
 
-    def plot_gmdh(self, gmdh: MultilayerGMDH, filename, view: bool):
+    def plot_gmdh(self, gmdh, filename, view):
         if len(gmdh.layers) == 0:
             return
 
