@@ -75,13 +75,13 @@ gmdh.fit(data_x, data_y)
     * ***sqCustom*** -  custom way to split data to train and test
                     set_custom_seq_type has to be provided
                     Example:
-        ```py
-        def my_set_custom_sequence_type(seq_types):
-            r = np.random.uniform(-1, 1, seq_types.shape)
-            seq_types[:] = np.where(r > 0, DataSetType.dsTrain, DataSetType.dsTest)
-        gmdh.param.seq_type = SequenceTypeSet.sqCustom
-        gmdh.param.set_custom_seq_type = my_set_custom_sequence_type
-        ```
+    ```py
+    def my_set_custom_sequence_type(seq_types):
+        r = np.random.uniform(-1, 1, seq_types.shape)
+        seq_types[:] = np.where(r > 0, DataSetType.dsTrain, DataSetType.dsTest)
+    gmdh.param.seq_type = SequenceTypeSet.sqCustom
+    gmdh.param.set_custom_seq_type = my_set_custom_sequence_type
+    ```
     * **example of using**:
     ```py
         from gmdh import MultilayerGMDH, SequenceTypeSet
