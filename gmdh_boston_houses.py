@@ -1,56 +1,55 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 __author__ = 'Konstantin Kolokolov'
 
 from sklearn.datasets import load_boston
-
 from sklearn import metrics
-from sklearn.metrics import confusion_matrix
-from gmdh import MultilayerGMDH, RefFunctionType, SequenceTypeSet, CriterionType
+from gmdh import MultilayerGMDH
 from plot_gmdh import PlotGMDH
 
-boston = load_boston()
 
-n_samples = boston.data.shape[0]
+if __name__ == '__main__':
 
-train_data_is_the_first_half = False
-if train_data_is_the_first_half:
-    train_x = boston.data[:n_samples // 2]
-    train_y = boston.target[:n_samples // 2]
-    exam_x = boston.data[n_samples // 2:]
-    exam_y = boston.target[n_samples // 2:]
-else:
-    train_x = boston.data[n_samples // 2:]
-    train_y = boston.target[n_samples // 2:]
-    exam_x = boston.data[:n_samples // 2]
-    exam_y = boston.target[:n_samples // 2]
+    boston = load_boston()
 
-gmdh = MultilayerGMDH()
+    n_samples = boston.data.shape[0]
 
+    train_data_is_the_first_half = False
+    n = n_samples // 2
+    if train_data_is_the_first_half:
+        train_x = boston.data[:n]
+        train_y = boston.target[:n]
+        exam_x = boston.data[n:]
+        exam_y = boston.target[n:]
+    else:
+        train_x = boston.data[n:]
+        train_y = boston.target[n:]
+        exam_x = boston.data[:n]
+        exam_y = boston.target[:n]
 
-
-#gmdh.param.seq_type = SequenceTypeSet.sqRandom
-#gmdh.param.seq_type = SequenceTypeSet.sqMode2
-# gmdh.param.ref_function_types.add(RefFunctionType.rfLinear)
-# gmdh.param.ref_function_types.add(RefFunctionType.rfQuadratic)
-# gmdh.param.criterion_type = CriterionType.cmpBias
-gmdh.param.criterion_type = CriterionType.cmpComb_test_bias
-# gmdh.param.criterion_type = CriterionType.cmpComb_bias_retrain
-gmdh.feature_names = boston.feature_names
-#gmdh.feature_names.append('random feature')
-gmdh.param.max_layer_count = 50
-# gmdh.param.admix_features = False
-gmdh.param.manual_min_l_count_value = False
-gmdh.param.min_l_count = 6
-gmdh.fit(train_x, train_y)
+    gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
+                          criterion_type='bias',
+                          feature_names=boston.feature_names,
+                          criterion_minimum_width=5,
+                          admix_features=True,
+                          max_layer_count=50,
+                          normilize=True,
+                          stop_train_epsilon_condition=0.001,
+                          layer_err_criterion='avg',
+                          alpha=0.5,
+                          n_jobs=2)
 
 
-# Now predict the value of the second half:
-# predict with GMDH
-y_pred = gmdh.predict(exam_x)
-mse = metrics.mean_squared_error(exam_y, y_pred)
-mae = metrics.mean_absolute_error(exam_y, y_pred)
+    gmdh.fit(train_x, train_y)
 
-print("mean squared error on test set: {mse:.2f}".format(mse=mse))
-print("mean absolute error on test set: {mae:.2f}".format(mae=mae))
+    # Now predict the value of the second half:
+    # predict with GMDH
+    y_pred = gmdh.predict(exam_x)
+    mse = metrics.mean_squared_error(exam_y, y_pred)
+    mae = metrics.mean_absolute_error(exam_y, y_pred)
 
-PlotGMDH(gmdh, filename='img/boston_house_model', plot_model_name=True, view=True)
-gmdh.plot_layer_error()
+    PlotGMDH(gmdh, filename='img/boston_house_model', plot_model_name=True, view=False)
+
+    y_pred = gmdh.predict(exam_x)
+
+    gmdh.plot_layer_error()

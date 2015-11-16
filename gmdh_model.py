@@ -6,15 +6,45 @@ import statsmodels.api as sm
 from numpy import ndarray
 import sys
 import math
+import types
+import multiprocessing.managers as mg
+from sklearn import metrics
+
+def _pickle_method(method):
+     # if method.im_self is None:
+     #    return getattr, (method.im_class, method.im_func. func_name)
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    if func_name.startswith('__') and not func_name.endswith('__'):
+        #deal with mangled names
+        cls_name = cls.__name__.lstrip('_')
+        func_name = '_%s%s' % (cls_name, func_name)
+    return _unpickle_method, (func_name, obj, cls)
+
+def _unpickle_method(func_name, obj, cls):
+    if obj and func_name in obj.__dict__:
+        cls, obj = obj, None # if func_name is classmethod
+    for cls in cls.__mro__:
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)
+
+
+def _transfer_dummy(cls, u1, u2, w):
+    return 0
 
 
 class RefFunctionType(Enum):
     rfUnknown = -1
     rfLinear = 0
-    rfLinearPerm = 1
+    rfLinearCov = 1
     rfQuadratic = 2
     rfCubic = 3
-    #rfHarmonic = 4
 
     @classmethod
     def get_name(cls, value):
@@ -22,8 +52,8 @@ class RefFunctionType(Enum):
             return 'Unknown'
         elif value == cls.rfLinear:
             return 'Linear'
-        elif value == cls.rfLinearPerm:
-            return 'LinearPerm'
+        elif value == cls.rfLinearCov:
+            return 'LinearCov'
         elif value == cls.rfQuadratic:
             return 'Quadratic'
         elif value == cls.rfCubic:
@@ -33,10 +63,20 @@ class RefFunctionType(Enum):
         else:
             return 'Unknown'
 
-
-class AlgorithmType(Enum):
-    Multilayer = 0
-    HarmonicTrend = 1
+    @staticmethod
+    def get(arg):
+        if isinstance(arg, RefFunctionType):
+            return arg
+        if arg == 'linear':
+            return RefFunctionType.rfLinear
+        elif arg in ('linear_cov', 'lcov'):
+            return RefFunctionType.rfLinearCov
+        elif arg in ('quadratic', 'quad'):
+            return RefFunctionType.rfQuadratic
+        elif arg == 'cubic':
+            return RefFunctionType.rfCubic
+        else:
+            raise ValueError(arg)
 
 
 class SequenceTypeSet(Enum):
@@ -66,11 +106,28 @@ class SequenceTypeSet(Enum):
         else:
             return False
 
-
-class SequenceTypeError(Exception):
-    """raised when unknown data type sequence applied
-    """
-    pass
+    @staticmethod
+    def get(arg):
+        if isinstance(arg, SequenceTypeSet):
+            return arg
+        elif arg == 'custom':
+            return SequenceTypeSet.sqCustom
+        elif arg == 'mode1':
+            return SequenceTypeSet.sqMode1
+        elif arg == 'mode2':
+            return SequenceTypeSet.sqMode2
+        elif arg == 'mode3_1':
+            return SequenceTypeSet.sqMode3_1
+        elif arg == 'mode3_2':
+            return SequenceTypeSet.sqMode3_2
+        elif arg == 'mode4_1':
+            return SequenceTypeSet.sqMode4_1
+        elif arg == 'mode4_2':
+            return SequenceTypeSet.sqMode4_2
+        elif arg == 'random':
+            return SequenceTypeSet.sqRandom
+        else:
+            raise ValueError(arg)
 
 
 class DataSetType(Enum):
@@ -81,7 +138,6 @@ class DataSetType(Enum):
 class CriterionType(Enum):
     cmpTest = 1
     cmpBias = 2
-    cmpComb_train_bias = 3
     cmpComb_test_bias = 4
     cmpComb_bias_retrain = 5
 
@@ -91,14 +147,27 @@ class CriterionType(Enum):
             return 'test error comparison'
         elif value == cls.cmpBias:
             return 'bias error comparison'
-        elif value == cls.cmpComb_train_bias:
-            return 'bias and train error comparison'
         elif value == cls.cmpComb_test_bias:
             return 'bias and test error comparison'
         elif value == cls.cmpComb_bias_retrain:
             return 'bias error comparison with retrain'
         else:
             return 'Unknown'
+
+    @staticmethod
+    def get(arg):
+        if isinstance(arg, CriterionType):
+            return arg
+        elif arg == 'test':
+            return CriterionType.cmpTest
+        elif arg == 'bias':
+            return CriterionType.cmpBias
+        elif arg == 'test_bias':
+            return CriterionType.cmpComb_test_bias
+        elif arg == 'bias_retrain':
+            return CriterionType.cmpComb_bias_retrain
+        else:
+            raise ValueError(arg)
 
 
 # **********************************************************************************************************************
@@ -113,98 +182,59 @@ class Model(object):
         self.model_index = model_index
         self.u1_index = u1_index
         self.u2_index = u2_index
-        self.gmdh = gmdh
+        self.criterion_type = gmdh.param.criterion_type
+        self.feature_names = gmdh.feature_names
+        self.layers = gmdh.layers
         self.ref_function_type = RefFunctionType.rfUnknown
         self.valid = True
         self.train_err = sys.float_info.max	            # model error on train data set
         self.test_err = sys.float_info.max	            # model error on test data set
         self.bias_err = sys.float_info.max	            # bias model error
-        self.transfer = self._transfer_dummy            # transfer function
+        self.transfer = _transfer_dummy            # transfer function
 
-    @classmethod
-    def _transfer_dummy(cls, u1, u2, w):
-        return 0
+    # @classmethod
+    # def _transfer_dummy(cls, u1, u2, w):
+    #     return 0
+
+    def need_bias_stuff(self):
+        if self.criterion_type == CriterionType.cmpTest:
+            return False
+        return True
 
     def get_error(self):
         """Compute error of the model according to specified criterion
         """
-        if self.gmdh.param.criterion_type == CriterionType.cmpTest:
+        if self.criterion_type == CriterionType.cmpTest:
             return self.test_err
-        elif self.gmdh.param.criterion_type == CriterionType.cmpBias:
+        elif self.criterion_type == CriterionType.cmpBias:
             return self.bias_err
-        elif self.gmdh.param.criterion_type == CriterionType.cmpComb_train_bias:
-            return 0.5*self.bias_err + 0.5*self.train_err
-        elif self.gmdh.param.criterion_type == CriterionType.cmpComb_test_bias:
+        elif self.criterion_type == CriterionType.cmpComb_test_bias:
             return 0.5*self.bias_err + 0.5*self.test_err
-        elif self.gmdh.param.criterion_type == CriterionType.cmpComb_bias_retrain:
+        elif self.criterion_type == CriterionType.cmpComb_bias_retrain:
             return self.bias_err
         else:
             return sys.float_info.max
 
-    def mse(self, x, y, w):
-        """Calculation of error using MSE criterion
-        """
-        sy = 0
-        data_len = x.shape[0]
-        yt = np.empty((data_len,), dtype=np.double)
-        x1 = x[:, self.u1_index]
-        x2 = x[:, self.u2_index]
-        for m in range(0, data_len):
-            yt[m] = self.transfer(x1[m], x2[m], w)
-        #vtransfer = np.vectorize(self.transfer, otypes=[np.float])
-        #vtransfer.excluded.add(2)
-        #yt = vtransfer(x1, x2, w)
+    @staticmethod
+    def get_regularity_err(u1_index, u2_index, transfer, x, y, w):
+        raise NotImplementedError
 
-        s = ((y - yt)**2).mean()
-        err = math.sqrt(s)
-        return err
-
-    def bias(self, train_x, test_x, train_y, test_y):
-        """Calculation of error using of bias criterion
-        """
-        s = 0
-        sy = 0
-
-        n_train = train_x.shape[0]
-        n_test = test_x.shape[0]
-        data_len = n_train + n_test
-        x1 = train_x[:, self.u1_index]
-        x2 = train_x[:, self.u2_index]
-        yta = np.empty((n_train,), dtype=np.double)
-        ytb = np.empty((n_train,), dtype=np.double)
-        for m in range(0, n_train):
-            yta[m] = self.transfer(x1[m], x2[m], self.w)
-            ytb[m] = self.transfer(x1[m], x2[m], self.wt)
-            #sy += train_y[m]**2
-        s = ((yta - ytb)**2).mean()
-
-        x1 = test_x[:, self.u1_index]
-        x2 = test_x[:, self.u2_index]
-        yta = np.empty((n_test,), dtype=np.double)
-        ytb = np.empty((n_test,), dtype=np.double)
-        for m in range(0, n_test):
-            yta[m] = self.transfer(x1[m], x2[m], self.w)
-            ytb[m] = self.transfer(x1[m], x2[m], self.wt)
-            #sy += self.test_y[m]**2
-        s += ((yta - ytb)**2).mean()
-
-        #err = math.sqrt(s / sy / data_len)
-        err = math.sqrt(s / data_len)
-        return err
+    def get_bias_err(u1_index, u2_index, transfer, train_x, test_x, train_y, test_y, w, wt):
+        raise NotImplementedError
 
     def get_features_name(self, input_index):
         if self.layer_index == 0:
             s = 'index=inp_{0}'.format(input_index)
-            if len(self.gmdh.feature_names) > 0:
-                s += ', {0}'.format(self.gmdh.feature_names[input_index])
+            if len(self.feature_names) > 0:
+                s += ', {0}'.format(self.feature_names[input_index])
         else:
-            models_num = len(self.gmdh.layers[self.layer_index-1])
+            models_num = len(self.layers[self.layer_index-1])
             if input_index < models_num:
                 s = 'index=prev_layer_model_{0}'.format(input_index)
             else:
                 s = 'index=inp_{0}'.format(input_index - models_num)
-                if len(self.gmdh.feature_names) > 0:
-                    s += ', {0}'.format(self.gmdh.feature_names[input_index - models_num])
+                if len(self.feature_names) > 0:
+                    s += ', {0}'.format(self.feature_names[input_index - models_num])
         return s
 
     def get_name(self):
@@ -217,6 +247,7 @@ class Model(object):
 # **********************************************************************************************************************
 #   Polynomial model class
 # **********************************************************************************************************************
+
 class PolynomModel(Model):
     """Polynomial GMDH model class
     """
@@ -229,32 +260,56 @@ class PolynomModel(Model):
         self.w = np.array([self.fw_size], dtype=np.double)
         self.wt = np.array([self.fw_size], dtype=np.double)
 
-    @classmethod
-    def _transfer_linear(cls, u1, u2, w):
+    def copy_result(self, source):
+        self.w = np.copy(source[1])
+        self.wt = np.copy(source[2])
+        self.valid = source[3]
+        self.bias_err = source[4]
+        self.train_err = source[5]
+        self.test_err = source[6]
+
+
+    def _transfer_linear(self, u1, u2, w):
         return w[0] + w[1]*u1 + w[2]*u2
-    
-    @classmethod
-    def _transfer_linear_perm(cls, u1, u2, w):
+
+    def _transfer_linear_cov(self, u1, u2, w):
         return w[0] + u1*(w[1] + w[3]*u2) + w[2]*u2
-    
-    @classmethod
-    def _transfer_quadratic(cls, u1, u2, w):
+
+    def _transfer_quadratic(self, u1, u2, w):
         return w[0] + u1*(w[1] + w[3]*u2 + w[4]*u1) + u2*(w[2] + w[5]*u2)
-    
-    @classmethod
-    def _transfer_cubic(cls, u1, u2, w):
+
+    def _transfer_cubic(self, u1, u2, w):
         u1_sq = u1*u1
         u2_sq = u2*u2
         return w[0] + w[1]*u1 + w[2]*u2 + w[3]*u1*u2 + w[4]*u1_sq + w[5]*u2_sq + \
             w[6]*u1*u1_sq + w[7]*u1_sq*u2 + w[8]*u1*u2_sq + w[9]*u2*u2_sq
+
+    # @classmethod
+    # def _transfer_linear(cls, u1, u2, w):
+    #     return w[0] + w[1]*u1 + w[2]*u2
+    #
+    # @classmethod
+    # def _transfer_linear_cov(cls, u1, u2, w):
+    #     return w[0] + u1*(w[1] + w[3]*u2) + w[2]*u2
+    #
+    # @classmethod
+    # def _transfer_quadratic(cls, u1, u2, w):
+    #     return w[0] + u1*(w[1] + w[3]*u2 + w[4]*u1) + u2*(w[2] + w[5]*u2)
+    #
+    # @classmethod
+    # def _transfer_cubic(cls, u1, u2, w):
+    #     u1_sq = u1*u1
+    #     u2_sq = u2*u2
+    #     return w[0] + w[1]*u1 + w[2]*u2 + w[3]*u1*u2 + w[4]*u1_sq + w[5]*u2_sq + \
+    #         w[6]*u1*u1_sq + w[7]*u1_sq*u2 + w[8]*u1*u2_sq + w[9]*u2*u2_sq
 
     def set_type(self, new_type):
         self.ref_function_type = new_type
         if new_type == RefFunctionType.rfLinear:
             self.transfer = self._transfer_linear
             self.fw_size = 3
-        elif new_type == RefFunctionType.rfLinearPerm:
-            self.transfer = self._transfer_linear_perm
+        elif new_type == RefFunctionType.rfLinearCov:
+            self.transfer = self._transfer_linear_cov
             self.fw_size = 4
         elif new_type == RefFunctionType.rfQuadratic:
             self.transfer = self._transfer_quadratic
@@ -263,13 +318,59 @@ class PolynomModel(Model):
             self.transfer = self._transfer_cubic
             self.fw_size = 10
         else:
-            self.transfer = self._transfer_dummy
+            self.transfer = _transfer_dummy
             self.fw_size = 0
+
+    @staticmethod
+    def get_regularity_err(u1_index, u2_index, transfer, x, y, w):
+        """Calculation of regularity error
+        """
+        data_len = x.shape[0]
+        x1 = x[:, u1_index]
+        x2 = x[:, u2_index]
+        yt = np.empty((data_len,), dtype=np.double)
+
+        for m in range(0, data_len):
+            yt[m] = transfer(x1[m], x2[m], w)
+
+        s = ((y - yt) ** 2).sum()
+        s2 = (y ** 2).sum()
+        err = s/s2
+        return err
+
+    @staticmethod
+    def get_sub_bias_err(u1_index, u2_index, transfer, x, len, w, wt):
+        """Helper function for calculation of unbiased error
+        """
+        x1 = x[:, u1_index]
+        x2 = x[:, u2_index]
+        yta = np.empty((len,), dtype=np.double)
+        ytb = np.empty((len,), dtype=np.double)
+
+        for m in range(0, len):
+            yta[m] = transfer(x1[m], x2[m], w)
+            ytb[m] = transfer(x1[m], x2[m], wt)
+
+        s = ((yta - ytb) ** 2).sum()
+        return s
+
+    @staticmethod
+    def get_bias_err(u1_index, u2_index, transfer, train_x, test_x, train_y, test_y, w, wt):
+        """Calculation of unbiased error
+        """
+        s = 0
+        n_train = train_x.shape[0]
+        n_test = test_x.shape[0]
+        s += PolynomModel.get_sub_bias_err(u1_index, u2_index, transfer, train_x, n_train, w, wt)
+        s += PolynomModel.get_sub_bias_err(u1_index, u2_index, transfer, test_x, n_test, w, wt)
+        s2 = (train_y ** 2).sum() + (test_y ** 2).sum()
+        err = s/s2
+        return err
 
     def get_name(self):
         if self.ftype == RefFunctionType.rfLinear:
             return 'w0 + w1*xi + w2*xj'
-        elif self.ftype == RefFunctionType.rfLinearPerm:
+        elif self.ftype == RefFunctionType.rfLinearCov:
             return 'w0 + w1*xi + w2*xj + w3*xi*xj'
         elif self.ftype == RefFunctionType.rfQuadratic:
             return 'full polynom 2nd degree'
@@ -281,8 +382,8 @@ class PolynomModel(Model):
     def get_short_name(self):
         if self.ftype == RefFunctionType.rfLinear:
             return 'linear'
-        elif self.ftype == RefFunctionType.rfLinearPerm:
-            return 'linear perm'
+        elif self.ftype == RefFunctionType.rfLinearCov:
+            return 'linear cov'
         elif self.ftype == RefFunctionType.rfQuadratic:
             return 'quadratic'
         elif self.ftype == RefFunctionType.rfCubic:
@@ -303,6 +404,7 @@ class PolynomModel(Model):
                 s += '; '
             else:
                 s += '\n'
+        s += '||w||^2={ww}'.format(ww=self.w.mean())
         return s
 
 
@@ -318,24 +420,43 @@ class LayerCreationError(Exception):
         self.layer_index = layer_index
 
 
+BaseLayerProxy = mg.MakeProxyType('BaseLayerProxy', (
+    '__add__', '__contains__', '__delitem__', '__delslice__',
+    '__getitem__', '__getslice__', '__len__', '__mul__',
+    '__reversed__', '__rmul__', '__setitem__', '__setslice__',
+    'append', 'count', 'extend', 'index', 'insert', 'pop', 'remove',
+    'reverse', 'sort', '__imul__', 'add_polynomial_model', 'add', 'delete',
+    'l_count', 'layer_index', 'n_features', 'err', 'valid', 'input_index_set'
+    ))
+
+
+class LayerProxy(BaseLayerProxy):
+    def __iadd__(self, value):
+        self._callmethod('extend', (value,))
+        return self
+    def __imul__(self, value):
+        self._callmethod('__imul__', (value,))
+        return self
+
+
 class Layer(list):
-    """Layer class of multilayer group method of data handling algorithm
+    """Layer class of multilayered group method of data handling algorithm
     """
 
     def __init__(self, gmdh, layer_index, *args):
         list.__init__(self, *args)
-        self.gmdh = gmdh
         self.layer_index = layer_index
         self.l_count = gmdh.l_count
         self.n_features = gmdh.n_features
         self.err = sys.float_info.max
+        self.train_err = sys.float_info.max
         self.valid = True
         self.input_index_set = set([])
 
-    def add_polynomial_model(self, index_u1, index_u2, ftype):
+    def add_polynomial_model(self, gmdh, index_u1, index_u2, ftype):
         """Add polynomial model to the layer
         """
-        self.add(PolynomModel(self.gmdh, self.layer_index, index_u1, index_u2, ftype, len(self)))
+        self.add(PolynomModel(gmdh, self.layer_index, index_u1, index_u2, ftype, len(self)))
 
     def __repr__(self):
         st = '*********************************************\n'
@@ -363,6 +484,15 @@ class Layer(list):
         for model in self:
             self.input_index_set.add(model.u1_index)
             self.input_index_set.add(model.u2_index)
+
+
+import sys
+if sys.version_info[2] == 2:
+    import copy_reg as cpr
+    cpr.pickle(types.MethodType, _pickle_method, _unpickle_method)
+# else:
+#     import copyreg as cpr
+# cpr.pickle(types.MethodType, _pickle_method, _unpickle_method)
 
 
 '''

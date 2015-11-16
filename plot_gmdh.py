@@ -46,7 +46,7 @@ class PlotGMDH:
         self.node_param = ({'style': 'filled', 'shape': 'rect', 'color': self.pen_color, 'fillcolor': self.node_color,
                                'fontsize': '10'})
         self.g.node(self.output, **self.io_node_param)
-        self.g.graph_attr.update(label='Multilayer group method of data handling model\n ', labelloc='t', center='true',
+        self.g.graph_attr.update(label='Multilayered group method of data handling model\n ', labelloc='t', center='true',
                                  fontsize='18')
         self.plot_gmdh(gmdh, filename, view)
 
@@ -67,7 +67,7 @@ class PlotGMDH:
         if model.layer_index == 0:
             return True, u_index
         else:
-            prev_layer = model.gmdh.layers[model.layer_index-1]
+            prev_layer = model.layers[model.layer_index-1]
             if u_index < len(prev_layer):
                 return False, u_index
             else:
@@ -78,7 +78,7 @@ class PlotGMDH:
         if input_is_original_feature:
             return self.add_edge(self.get_feature_name(feature_index), self.get_model_name(model))
         else:
-            prev_layer = model.gmdh.layers[model.layer_index-1]
+            prev_layer = model.layers[model.layer_index-1]
             parent_model = prev_layer[feature_index]
             return self.add_edge(self.get_model_name(parent_model), self.get_model_name(model))
 

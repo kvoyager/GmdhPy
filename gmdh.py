@@ -1,22 +1,26 @@
 """
-Multilayer group method of data handling of Machine learning for Python
+Multilayered group method of data handling of Machine learning for Python
 ==================================
 
 """
 __author__ = 'Konstantin Kolokolov'
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
-import timeit
 import numpy as np
-from numpy import ndarray
 import sys
-from gmdh_model import RefFunctionType, CriterionType, SequenceTypeSet, SequenceTypeError
+from gmdh_model import RefFunctionType, CriterionType, SequenceTypeSet
 from gmdh_model import DataSetType, Model, PolynomModel, Layer, LayerCreationError
+from sklearn.preprocessing import StandardScaler
+from sklearn import linear_model
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
+from multiprocessing import Pool, Manager
+import multiprocessing as mp
+import six
+import time
+
 
 # **********************************************************************************************************************
-#   implementation of multilayer GMDH algorithm
+#   implementation of multilayered GMDH algorithm
 # **********************************************************************************************************************
 class GMDHCheckError(Exception):
     """
@@ -36,51 +40,45 @@ class MultilayerGMDHparam(object):
 
     criterion_type - criterion for selecting best models
     the following criteria are possible:
-        cmpTest: the default value,
+        'test': the default value,
             models are compared on the basis of test error
-        cmpBias: models are compared on the basis of bias error
-        cmpComb_train_bias: combined criterion, models are compared on the basis of bias and train errors
-        cmpComb_test_bias: combined criterion, models are compared on the basis of bias and test errors
-        cmpComb_bias_retrain: firstly, models are compared on the basis of bias error, then models are retrain
+        'bias': models are compared on the basis of bias error
+        'test_bias': combined criterion, models are compared on the basis of bias and test errors
+        'bias_retrain': firstly, models are compared on the basis of bias error, then models are retrain
             on the total data set (train and test)
     example of using:
-        from gmdh import MultilayerGMDH, CriterionType
-        gmdh = MultilayerGMDH()
-        gmdh.param.criterion_type = CriterionType.cmpComb_bias_retrain
+        gmdh = MultilayerGMDH(criterion_type='bias_retrain')
 
     seq_type - method to split data set to train and test
-        sqMode1 - 	the default value
+        'mode1' - 	the default value
                     data set is split to train and test data sets in the following way:
                     ... train test train test train test ... train test.
                     The last point is chosen to belong to test set
-        sqMode2 - 	data set is split to train and test data sets in the following way:
+        'mode2' - 	data set is split to train and test data sets in the following way:
                     ... train test train test train test ... test train.
                     The last point is chosen to belong to train set
-        sqMode3_1 - data set is split to train and test data sets in the following way:
+        'mode3_1' - data set is split to train and test data sets in the following way:
                     ... train test train train test train train test ... train train test.
                     The last point is chosen to belong to test set
-        sqMode4_1 - data set is split to train and test data sets in the following way:
+        'mode4_1' - data set is split to train and test data sets in the following way:
                     ... train test train train train test ... test train train train test.
                     The last point is chosen to belong to test set
-        sqMode3_2 - data set is split to train and test data sets in the following way:
+        'mode3_2' - data set is split to train and test data sets in the following way:
                     ... train test test train test test train test ... test test train.
                     The last point is chosen to belong to train set
-        sqMode4_2 - data set is split to train and test data sets in the following way:
+        'mode4_2' - data set is split to train and test data sets in the following way:
                     ... train test test test train test ... train test test test train.
                     The last point is chosen to belong to train set
-        sqRandom -  Random split data to train and test
-        sqCustom -  custom way to split data to train and test
+        'random' -  Random split data to train and test
+        'custom' -  custom way to split data to train and test
                     set_custom_seq_type has to be provided
                     Example:
                     def my_set_custom_sequence_type(seq_types):
                         r = np.random.uniform(-1, 1, seq_types.shape)
                         seq_types[:] = np.where(r > 0, DataSetType.dsTrain, DataSetType.dsTest)
-                    gmdh.param.seq_type = SequenceTypeSet.sqCustom
-                    gmdh.param.set_custom_seq_type = my_set_custom_sequence_type
+                    MultilayerGMDH(seq_type='custom', set_custom_seq_type=my_set_custom_sequence_type)
     example of using:
-        from gmdh import MultilayerGMDH, SequenceTypeSet
-        gmdh = MultilayerGMDH()
-        gmdh.param.seq_type = SequenceTypeSet.sqMode2
+        gmdh = MultilayerGMDH(seq_type='random')
 
     max_layer_count - maximum number of layers,
         the default value is mostly infinite (sys.maxsize)
@@ -90,6 +88,10 @@ class MultilayerGMDHparam(object):
          criterion value has minimum at layer with index 10, the algorithm will proceed till the layer
          with index 15
          the default value is 5
+
+    stop_train_epsilon_condition - the threshold to stop train. If the layer relative training error in compare
+        with minimum layer error becomes smaller than stop_train_epsilon_condition the train is stopped. Default value is
+        0.001
 
     manual_min_l_count_value - if this value set to False, the number of best models to be
         selected is determined automatically and it is equal number of original features.
@@ -101,45 +103,102 @@ class MultilayerGMDHparam(object):
         Note: if min_l_count is larger than number of generated models of the layer it will be reduced
         to that number
     example of using:
-        from gmdh import MultilayerGMDH
-        gmdh = MultilayerGMDH()
-        gmdh.param.manual_min_l_count_value = True
-        gmdh.param.min_l_count = 20
+        gmdh = MultilayerGMDH(manual_min_l_count_value=True, min_l_count = 20)
 
-    ref_function_types - set of reference functions, by default the set contains polynom
-        of the second degree: y = w0 + w1*x1 + w2*x2 + w3*x1*x2
-        you can add other reference functions in the following way:
-        param.ref_function_types.add(RefFunctionType.rfLinear) - y = w0 + w1*x1 + w2*x2
-        param.ref_function_types.add(RefFunctionType.rfQuadratic) - full polynom of the 2-nd degree
-        param.ref_function_types.add(RefFunctionType.rfCubic) - full polynom of the 3-rd degree
+    ref_function_types - set of reference functions, by default the set contains linear combination of two inputs
+        and covariation: y = w0 + w1*x1 + w2*x2 + w3*x1*x2
+        you can add other reference functions:
+        'linear': y = w0 + w1*x1 + w2*x2
+        'linear_cov': y = w0 + w1*x1 + w2*x2 + w3*x1*x2
+        'quadratic': full polynom of the 2-nd degree
+        'cubic': - full polynom of the 3-rd degree
+        examples of using:
+         - MultilayerGMDH(ref_functions='linear')
+         - MultilayerGMDH(ref_functions=('linear_cov', 'quadratic', 'cubic', 'linear'))
+         - MultilayerGMDH(ref_functions=('quadratic', 'linear'))
+
+    normilize - scale and normilize features if set to True. Default value is True
+
+    layer_err_criterion - criterion of layer error calculation: 'top' - the topmost best model error is chosen
+        as layer error; 'avg' - the layer error is the average error of the selected best models
+        default value is 'top'
+
+    alpha - alpha value used in model train by Ridge regression (see sklearn linear_model.Ridge)
+        default value is 0.5
+
+    print_debug - print debug information while training, default = true
+
+    n_jobs - number of parallel processes(threads) to train model, default 1. Use 'max' to train using
+        all available threads.
 
     """
     def __init__(self):
+        self.ref_function_types = set()
         self.admix_features = True
         self.criterion_type = CriterionType.cmpTest
         self.seq_type = SequenceTypeSet.sqMode1
-        self.set_custom_seq_type = self.__dummy_set_custom_sequence_type
+        self.set_custom_seq_type = self.dummy_set_custom_sequence_type
         self.max_layer_count = sys.maxsize
         self.criterion_minimum_width = 5
+        self.stop_train_epsilon_condition = 0.001
         self.manual_min_l_count_value = False
         self.min_l_count = 0
-        self.ref_function_types = set([RefFunctionType.rfLinearPerm])
+        self.normilize = True
+        self.layer_err_criterion = 'top'
+        self.alpha = 0.5
+        self.print_debug = True
+        self.n_jobs = 1
 
     @classmethod
-    def __dummy_set_custom_sequence_type(cls, seq_types):
-        raise SequenceTypeError('param.set_custom_seq_type function is not provided')
+    def dummy_set_custom_sequence_type(cls, seq_types):
+        raise ValueError('param.set_custom_seq_type function is not provided')
 
 
 class BaseMultilayerGMDH(object):
     """
-    Base class for multilayer group method of data handling algorithm
+    Base class for multilayered group method of data handling algorithm
     """
 
-    def __init__(self):
+    def __init__(self, seq_type, set_custom_seq_type, ref_functions, criterion_type, feature_names, max_layer_count,
+                 admix_features, manual_min_l_count_value, min_l_count, criterion_minimum_width,
+                 stop_train_epsilon_condition, normilize, layer_err_criterion, alpha, print_debug, n_jobs):
         self.param = MultilayerGMDHparam()                  # parameters
+        self.param.seq_type = SequenceTypeSet.get(seq_type)
+        if set_custom_seq_type is not None:
+            self.param.set_custom_seq_type = set_custom_seq_type
+
+        if isinstance(ref_functions, RefFunctionType):
+            self.param.ref_function_types.add(ref_functions)
+        elif not isinstance(ref_functions, six.string_types):
+            for ref_function in ref_functions:
+                self.param.ref_function_types.add(RefFunctionType.get(ref_function))
+        else:
+            self.param.ref_function_types.add(RefFunctionType.get(ref_functions))
+
+        self.param.criterion_type = CriterionType.get(criterion_type)
+        self.feature_names = feature_names                  # name of inputs, used to print GMDH
+        self.param.max_layer_count = max_layer_count
+        self.param.admix_features = admix_features
+        self.param.manual_min_l_count_value = manual_min_l_count_value
+        self.param.min_l_count = min_l_count
+        self.param.criterion_minimum_width = criterion_minimum_width
+        self.param.stop_train_epsilon_condition = stop_train_epsilon_condition
+        self.param.normilize = normilize
+        self.param.layer_err_criterion = layer_err_criterion
+        self.param.alpha = alpha
+        self.param.print_debug = print_debug
+
+        if isinstance(n_jobs, six.string_types):
+            if n_jobs == 'max':
+                self.param.n_jobs = mp.cpu_count()
+            else:
+                raise ValueError(n_jobs)
+        else:
+            self.param.n_jobs = max(1, min(mp.cpu_count(), n_jobs))
+
+
         self.l_count = 0                                    # number of best models to be selected
         self.layers = []                                    # list of gmdh layers
-        self.feature_names = []                             # name of inputs, used to print GMDH
         self.n_features = 0                                 # number of original features
         self.n_train = 0                                    # number of train samples
         self.n_test = 0                                     # number of test samples
@@ -158,7 +217,10 @@ class BaseMultilayerGMDH(object):
         self.layer_data_x = np.array([], dtype=np.double)       # array of total samples for current layer
 
         self.layer_err = np.array([], dtype=np.double)          # array of layer's errors
+        self.train_layer_err = np.array([], dtype=np.double)    # array of layer's train errors
         self.valid = False
+        # self.manager = Manager()
+        # self.lst = self.manager.Layer(self, 0)
 
     def _select_best_models(self, layer):
         """
@@ -183,14 +245,149 @@ class BaseMultilayerGMDH(object):
         # if layer.l_count == 0:
         #    raise LayerCreationError('Layer is not valid', layer.layer_index)
 
+    def _set_layer_errors(self, layer):
+        """
+        set layer errors
+        """
         # models are already sorted, the layer error is the error of the first model
         # (the model with smallest error according to the specified criterion)
-        layer.err = layer[0].get_error()
+
+        if self.param.layer_err_criterion == 'top':
+            layer.err = layer[0].get_error()
+            layer.train_err = sys.float_info.max
+        elif self.param.layer_err_criterion == 'avg':
+            layer.err = 0
+            layer.train_err = 0
+        else:
+            raise NotImplementedError
+
+        den = 1.0/float(len(layer))
+        for model in layer:
+            if model.valid:
+                if self.param.layer_err_criterion == 'avg':
+                    layer.err += den*model.get_error()
+                    layer.train_err += den*model.train_err
+                elif self.param.layer_err_criterion == 'top':
+                    layer.train_err = min(layer.train_err, model.train_err)
+                else:
+                    raise NotImplementedError
+
+
+
+# **********************************************************************************************************************
+#   MultilayerGMDH class
+# **********************************************************************************************************************
+
+def set_matrix_a(ftype, u1_index, u2_index, source, source_y, a, y):
+    """
+    function set matrix value required to calculate polynom model coefficient
+    by multiple linear regression
+    """
+    m = source.shape[0]
+    u1x = source[:, u1_index]
+    u2x = source[:, u2_index]
+    for mi in range(0, m):
+        # compute inputs for model
+        u1 = u1x[mi]
+        u2 = u2x[mi]
+        a[mi, 0] = 1
+        a[mi, 1] = u1
+        a[mi, 2] = u2
+        if RefFunctionType.rfLinearCov == ftype:
+            a[mi, 3] = u1 * u2
+        if RefFunctionType.rfQuadratic == ftype:
+            a[mi, 3] = u1 * u2
+            u1_sq = u1 * u1
+            u2_sq = u2 * u2
+            a[mi, 4] = u1_sq
+            a[mi, 5] = u2_sq
+        if RefFunctionType.rfCubic == ftype:
+            a[mi, 3] = u1 * u2
+            u1_sq = u1 * u1
+            u2_sq = u2 * u2
+            a[mi, 4] = u1_sq
+            a[mi, 5] = u2_sq
+            a[mi, 6] = u1_sq * u1
+            a[mi, 7] = u1_sq * u2
+            a[mi, 8] = u2_sq * u1
+            a[mi, 9] = u2_sq * u2
+    y[:] = source_y
+
+
+def train_model(alpha, a, y):
+    # clf = linear_model.LinearRegression()
+    # w, resid_a, rank_a, sigma_a = np.linalg.lstsq(a, ya)
+    clf = linear_model.Ridge(alpha=alpha, solver='lsqr')
+    a2 = a[:,1:]
+    clf.fit(a2, y)
+    w = np.empty((len(clf.coef_) + 1,), dtype=np.double)
+    w[0] = clf.intercept_
+    w[1:] = clf.coef_
+    return w
+
+
+def sub_calculate_model_weights(n, ftype, u1_index, u2_index, fw_size, need_bias_stuff, transfer,
+                                mlst, n_train, n_test, train_x, train_y, test_x, test_y, layer_index, alpha):
+    """
+    Calculate model coefficients
+    """
+
+    # declare Y variables of multiple linear regression for train and test targets
+    ya = np.empty((n_train,), dtype=np.double)
+    yb = np.empty((n_test,), dtype=np.double)
+    min_rank = 2
+    rank_b = 10000000
+
+    # declare X variables of multiple linear regression for train and test targets
+    a = np.empty((n_train, fw_size), dtype=np.double)
+    b = np.empty((n_test, fw_size), dtype=np.double)
+    wt = None
+    train_err = sys.float_info.max
+    test_err = sys.float_info.max
+
+    # set X and Y variables of multiple linear regression
+    # Train the model using train and test sets
+    try:
+        set_matrix_a(ftype, u1_index, u2_index, train_x, train_y, a, ya)
+        w = train_model(alpha, a, ya)
+        rank_a = 10
+        pass
+    except:
+        raise LayerCreationError('Error training model on train data set', layer_index)
+
+    if need_bias_stuff:
+        try:
+            set_matrix_a(ftype, u1_index, u2_index, test_x, test_y, b, yb)
+            wt = train_model(alpha, b, yb)
+            rank_b = 10
+        except:
+            raise LayerCreationError('Error training model on train data set', layer_index)
+
+    bias_err = 0
+    if rank_a < min_rank or rank_b < min_rank:
+        valid = False
+    else:
+        valid = True
+        # calculate model errors
+        if need_bias_stuff:
+            bias_err = PolynomModel.get_bias_err(u1_index, u2_index, transfer, train_x, test_x, train_y, test_y, w, wt)
+
+        train_err = PolynomModel.get_regularity_err(u1_index, u2_index, transfer, train_x, train_y, w)
+        test_err = PolynomModel.get_regularity_err(u1_index, u2_index, transfer, test_x, test_y, w)
+
+    if mlst is not None:
+        mlst.append((n, w, wt, valid, bias_err, train_err, test_err))
+    else:
+        return (n, w, wt, valid, bias_err, train_err, test_err)
+
+
+def sub_calculate_model_weights_helper(args):
+    return sub_calculate_model_weights(*args)
 
 
 class MultilayerGMDH(BaseMultilayerGMDH):
     """
-    Multilayer group method of data handling algorithm with polynomial partial descriptions(models)
+    Multilayered group method of data handling algorithm with polynomial partial descriptions(models)
 
     Example of using:
 
@@ -206,16 +403,33 @@ class MultilayerGMDH(BaseMultilayerGMDH):
     Example of using with parameters specification:
 
         from gmdh import MultilayerGMDH, CriterionType
-        gmdh = MultilayerGMDH()
-        gmdh.param.criterion_type = CriterionType.cmpComb_bias_retrain
+        gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
+                          criterion_type='bias',
+                          feature_names=boston.feature_names,
+                          criterion_minimum_width=5,
+                          admix_features=True,
+                          max_layer_count=50,
+                          normilize=True,
+                          stop_train_epsilon_condition=0.001,
+                          layer_err_criterion='avg',
+                          alpha=0.5,
+                          n_jobs=4)
         gmdh.fit(data_x, data_y)
         exam_y = gmdh.predict(exam_x)
 
     Check MultilayerGMDHparam for details of parameters specification
     """
-
-    def __init__(self):
-        super(self.__class__, self).__init__()
+    def __init__(self, seq_type=SequenceTypeSet.sqMode1, set_custom_seq_type=None,
+                 ref_functions=RefFunctionType.rfLinearCov,
+                 criterion_type=CriterionType.cmpTest, feature_names=None, max_layer_count=50,
+                 admix_features=True, manual_min_l_count_value=False, min_l_count=5, criterion_minimum_width=5,
+                 stop_train_epsilon_condition=0.001, normilize=True, layer_err_criterion='top', alpha=0.5,
+                 print_debug=True, n_jobs=1):
+        super(self.__class__, self).__init__(seq_type, set_custom_seq_type,
+                 ref_functions,
+                 criterion_type, feature_names, max_layer_count,
+                 admix_features, manual_min_l_count_value, min_l_count, criterion_minimum_width,
+                 stop_train_epsilon_condition, normilize, layer_err_criterion, alpha, print_debug, n_jobs)
 
     def __repr__(self):
         st = '*********************************************\n'
@@ -240,48 +454,15 @@ class MultilayerGMDH(BaseMultilayerGMDH):
             s += layer.__repr__()
         return s
 
-    @classmethod
-    def set_matrix_a(cls, model, source, source_y, a, y):
-        """
-        function set matrix value required to calculate polynom model coefficient
-        by multiple linear regression
-        """
-        m = source.shape[0]
-        u1x = source[:, model.u1_index]
-        u2x = source[:, model.u2_index]
-        for mi in range(0, m):
-            # compute inputs for model
-            u1 = u1x[mi]
-            u2 = u2x[mi]
-            a[mi, 0] = 1
-            a[mi, 1] = u1
-            a[mi, 2] = u2
-            if RefFunctionType.rfLinearPerm == model.ftype:
-                a[mi, 3] = u1 * u2
-            if RefFunctionType.rfQuadratic == model.ftype:
-                a[mi, 3] = u1 * u2
-                u1_sq = u1 * u1
-                u2_sq = u2 * u2
-                a[mi, 4] = u1_sq
-                a[mi, 5] = u2_sq
-            if RefFunctionType.rfCubic == model.ftype:
-                a[mi, 3] = u1 * u2
-                u1_sq = u1 * u1
-                u2_sq = u2 * u2
-                a[mi, 4] = u1_sq
-                a[mi, 5] = u2_sq
-                a[mi, 6] = u1_sq * u1
-                a[mi, 7] = u1_sq * u2
-                a[mi, 8] = u2_sq * u1
-                a[mi, 9] = u2_sq * u2
-        y[:] = source_y
-
     def _new_layer_with_all_models(self):
         """
         Generate new layer with all possible models
         """
         layers_count = len(self.layers)
         layer = Layer(self, layers_count)
+        # manager = Manager()
+        # layer = manager.Layer(self, 0)
+
 
         if layers_count == 0:
             # the first layer, number of inputs equals to the number of the original features
@@ -300,19 +481,19 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
                 # y = w0 + w1*x1 + w2*x2
                 if RefFunctionType.rfLinear in self.param.ref_function_types:
-                    layer.add_polynomial_model(u1, u2, RefFunctionType.rfLinear)
+                    layer.add_polynomial_model(self, u1, u2, RefFunctionType.rfLinear)
 
                 # y = w0 + w1*x1 + w2*x2 + w3*x1*x2
-                if RefFunctionType.rfLinearPerm in self.param.ref_function_types:
-                    layer.add_polynomial_model(u1, u2, RefFunctionType.rfLinearPerm)
+                if RefFunctionType.rfLinearCov in self.param.ref_function_types:
+                    layer.add_polynomial_model(self, u1, u2, RefFunctionType.rfLinearCov)
 
                 # y = full polynom of the 2-nd degree
                 if RefFunctionType.rfQuadratic in self.param.ref_function_types:
-                    layer.add_polynomial_model(u1, u2, RefFunctionType.rfQuadratic)
+                    layer.add_polynomial_model(self, u1, u2, RefFunctionType.rfQuadratic)
 
                 # y = full polynom of the 3-rd degree
                 if RefFunctionType.rfCubic in self.param.ref_function_types:
-                    layer.add_polynomial_model(u1, u2, RefFunctionType.rfCubic)
+                    layer.add_polynomial_model(self, u1, u2, RefFunctionType.rfCubic)
 
         if len(layer) == 0:
             raise LayerCreationError('Error creating layer. No functions were generated', layer.layer_index)
@@ -326,68 +507,44 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         data_len = self.n_train + self.n_test
         a = np.empty((data_len, model.fw_size), dtype=np.double)
         y = np.empty((data_len,), dtype=np.double)
-        self.set_matrix_a(model, self.layer_data_x, self.data_y, a, y)
+        set_matrix_a(model.ftype, model.u1_index, model.u2_index, self.layer_data_x, self.data_y, a, y)
         # Train the model using all data (train and test sets)
         try:
-            model.w, resid_a, rank_a, sigma_a = np.linalg.lstsq(a, y)
+            model.w = train_model(self.param.alpha, a, y)
         except:
-            raise LayerCreationError('Error executing linalg on train data set', layer.layer_index)
+            raise LayerCreationError('Error training model on full data set', layer.layer_index)
 
-    def _sub_calculate_model_weights(self, from_m, to_m, layer):
-        """
-        Calculate model coefficients
-        """
+    def _retrain_layer(self, layer):
+        for model in layer:
+            self._retrain(layer, model)
 
-        # declare Y variables of multiple linear regression for train and test targets
-        ya = np.empty((self.n_train,), dtype=np.double)
-        yb = np.empty((self.n_test,), dtype=np.double)
-        min_rank = 2
-
-        # loop for all models in the layer starting from 'from_m' to 'to_m'
-        for n in range(from_m, to_m):
-            model = layer[n]
-            if isinstance(model, PolynomModel):
-                # declare X variables of multiple linear regression for train and test targets
-                a = np.empty((self.n_train, model.fw_size), dtype=np.double)
-                b = np.empty((self.n_test, model.fw_size), dtype=np.double)
-
-                # set X and Y variables of multiple linear regression
-                self.set_matrix_a(model, self.train_x, self.train_y, a, ya)
-                self.set_matrix_a(model, self.test_x,  self.test_y, b, yb)
-
-                # Train the model using train and test sets
-                try:
-                    model.w, resid_a, rank_a, sigma_a = np.linalg.lstsq(a, ya)
-                except:
-                    raise LayerCreationError('Error executing linalg on train data set', layer.layer_index)
-                try:
-                    model.wt, resid_b, rank_b, sigma_b = np.linalg.lstsq(b, yb)
-                except:
-                    raise LayerCreationError('Error executing linalg on test data set' , layer.layer_index)
-                model.valid = True
-                if rank_a < min_rank or rank_b < min_rank:
-                    model.valid = False
-                    self.train_err = sys.float_info.max
-                    self.test_err = sys.float_info.max
-                    self.bias_err = sys.float_info.max
-                else:
-                    model.valid = True
-                    # calculate model errors
-                    model.bias_err = model.bias(self.train_x, self.test_x, self.train_y, self.test_y)
-                    # if criterion is cmpComb_bias_retrain we need to retrain model on total data set
-                    # before calculate train and test errors
-                    if self.param.criterion_type == CriterionType.cmpComb_bias_retrain:
-                        self._retrain(layer, model)
-                    model.train_err = model.mse(self.train_x, self.train_y, model.w)
-                    model.test_err = model.mse(self.test_x, self.test_y, model.wt)
 
     def _calculate_model_weights(self, layer):
         """
         Calculate model coefficients
         """
-        #   parallel computing can be implemented here
-        #   number of model to be paralleled = len(layer)
-        self._sub_calculate_model_weights(0, len(layer), layer)
+
+        if self.param.n_jobs > 1:
+            del self.mlst[:]
+            job_args = [(idx, model.ftype, model.u1_index, model.u2_index, model.fw_size, model.need_bias_stuff(),
+                         model.transfer,
+                         self.mlst, self.n_train, self.n_test, self.train_x, self.train_y, self.test_x,
+                         self.test_y, layer.layer_index, self.param.alpha)
+                        for idx, model in enumerate(layer)]
+            self.pool.map(sub_calculate_model_weights_helper, job_args)
+
+            for mp in self.mlst:
+                n = mp[0]
+                layer[n].copy_result(mp)
+            del self.mlst[:]
+        else:
+            for n, model in enumerate(layer):
+                mp = sub_calculate_model_weights(n, model.ftype, model.u1_index, model.u2_index, model.fw_size,
+                        model.need_bias_stuff(), model.transfer,
+                        None, self.n_train, self.n_test, self.train_x, self.train_y, self.test_x, self.test_y,
+                        layer.layer_index, self.param.alpha)
+                layer[n].copy_result(mp)
+                pass
         return
 
     def _create_layer(self):
@@ -428,13 +585,21 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         # delete unused models keeping only l_count best models
         del layer[layer.l_count:]
 
+        # calculate and set layer errors
+        self._set_layer_errors(layer)
+
+        # if criterion is cmpComb_bias_retrain we need to retrain model on total data set
+        # before calculate train and test errors
+        if self.param.criterion_type == CriterionType.cmpComb_bias_retrain:
+            self._retrain_layer(layer)
+
         # add created layer
         self.layers.append(layer)
 
         return layer
 
     def _set_internal_data(self, layer, data, x):
-        """Compute inputs(features) for the layer sdfas
+        """Compute inputs(features) for the layer
         data - original features of algorithm , the dimensionality is (data size) x (number of original features)
         x is the output of selected models from the previous layer
         """
@@ -453,7 +618,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                 n += data.shape[1]
             out_x = np.zeros([data_m, n], dtype=np.double)
             for i in range(0, data_m):
-                for j in range(0, layer.l_count):
+                for j in range(0, min(len(layer), layer.l_count)):
                     # loop for selected best models
                     model = layer[j]
                     u1 = x[i, model.u1_index]
@@ -481,7 +646,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
             elif self.seq_types[i] == DataSetType.dsTrain:
                 self.n_train += 1
             else:
-                raise SequenceTypeError('Unknown type of data division generated by set_custom_seq_type function')
+                raise ValueError('Unknown type of data division generated by set_custom_seq_type function')
 
     def _set_sequence_type(self, seq_type, data_len):
         """
@@ -492,7 +657,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         if seq_type == SequenceTypeSet.sqCustom:
             if self.param.set_custom_seq_type is None:
-                raise SequenceTypeError('param.set_custom_seq_type function is not provided')
+                raise ValueError('param.set_custom_seq_type function is not provided')
             self.param.set_custom_seq_type(self.seq_types)
             self._get_split_numbers()
             return
@@ -516,7 +681,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         elif seq_type == SequenceTypeSet.sqMode4_2:
             n = 4
         else:
-            raise SequenceTypeError('Unknown type of data division into train and test sequences')
+            raise ValueError('Unknown type of data division into train and test sequences')
 
         self.n_train = 0
         self.n_test = 0
@@ -593,7 +758,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
     def _train_gmdh(self):
         """
-        Train multilayer GMDH algorithm
+        Train multilayered GMDH algorithm
         """
 
         min_error = sys.float_info.max
@@ -601,12 +766,21 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         del self.layers[:]
         self.valid = False
         error_min_index = 0
+        if self.param.n_jobs > 1:
+            self.pool = Pool(processes=self.param.n_jobs)
+            manager = Manager()
+            self.mlst = manager.list()
 
         while True:
             try:
                 # create layer, calculating all possible models and then selecting the best ones
                 # using specifying criterion
+                t0 = time.time()
                 layer = self._create_layer()
+                t1 = time.time()
+                total_time = (t1-t0)
+                if self.param.print_debug:
+                    print("train layer{lnum} in {time:0.2f} sec".format(lnum=layer.layer_index, time=total_time))
 
                 # proceed until stop condition is fulfilled
 
@@ -618,6 +792,11 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                    layer.layer_index - error_min_index >= self.param.criterion_minimum_width:
                     # layer error stopped decreasing
                     error_stopped_decrease = True
+
+                if layer.layer_index > 0 and layer.err < min_error and min_error > 0:
+                    if (min_error-layer.err)/min_error < self.param.stop_train_epsilon_condition:
+                        # layer relative error decrease value is below stop condition
+                        error_stopped_decrease = True
 
                 min_error = min(min_error, layer.err)
 
@@ -636,13 +815,20 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         if self.valid:
             self.layer_err.resize((len(self.layers),))
+            self.train_layer_err.resize((len(self.layers),))
             for i in range(0, len(self.layers)):
                 self.layer_err[i] = self.layers[i].err
+                self.train_layer_err[i] = self.layers[i].train_err
             # delete unused layers keeping only error_min_index layers
             del self.layers[error_min_index+1:]
             # to be implemented - delete invalid models
 
             self._delete_unused_models()
+
+        if self.param.n_jobs > 1:
+            self.pool = None
+            manager = None
+            self.mlst = None
 
 
     def _set_data(self, data_x, data_y):
@@ -666,6 +852,26 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         if isinstance(self.feature_names, np.ndarray):
             self.feature_names = self.feature_names.tolist()
+
+        # attempt to check if we have a cross over train and test sets
+        # res = self.aux_check_set_crossover(self.input_train_x, self.input_train_x)
+        # print res
+        # pass
+
+    @staticmethod
+    def aux_check_set_crossover(d1, d2):
+        def is_contain_row(array, row):
+            idx = (np.abs(array-row)).argmin()
+            if idx < 0 or idx >= array.shape[0]:
+                return False
+            frow = array[idx, :]
+            return np.array_equal(row, frow)
+
+        result = np.empty((d2.shape[0],), dtype=bool)
+        for i in range(d2.shape[0]):
+            row = d2[i, :]
+            result[i] = is_contain_row(d1, row)
+        return result
 
     def _pre_check(self):
         """
@@ -693,9 +899,10 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         if self.data_x.shape[0] < 2:
             raise ValueError('Error: number of samples has to be not less than two')
 
-        feature_names_len = len(self.feature_names)
-        if feature_names_len > 0 and feature_names_len != self.data_x.shape[1]:
-            raise ValueError('Error: size of feature_names list does not equal to number of features')
+        if self.feature_names is not None:
+            feature_names_len = len(self.feature_names)
+            if feature_names_len > 0 and feature_names_len != self.data_x.shape[1]:
+                raise ValueError('Error: size of feature_names list does not equal to number of features')
 
     def _pre_fit_check(self):
         """
@@ -721,8 +928,8 @@ class MultilayerGMDH(BaseMultilayerGMDH):
             raise ValueError('Error: number of features in data to predict has to equal to number\
              of features in fit samples')
 
-        if not self.valid:
-            raise ValueError('GMDH is not trained')
+        # if not self.valid:
+        #     raise ValueError('GMDH is not trained')
 
 
     # *************************************************************
@@ -730,7 +937,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
     # *************************************************************
     def fit(self, data_x, data_y):
         """
-        Fit multilayer group method of data handling algorithm (model)
+        Fit multilayered group method of data handling algorithm (model)
 
         Parameters
         ----------
@@ -753,7 +960,11 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         """
 
         self.data_y = data_y
-        self.data_x = data_x
+        if self.param.normilize:
+            self.scaler  = StandardScaler()
+            self.data_x = self.scaler.fit_transform(data_x)
+        else:
+            self.data_x = data_x
         self._pre_check()
         self._set_data(data_x, data_y)
         self._pre_fit_check()
@@ -762,7 +973,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
     def predict(self, input_data_x):
         """
-        Predict using multilayer group method of data handling algorithm (model)
+        Predict using multilayered group method of data handling algorithm (model)
 
         Parameters
         ----------
@@ -794,7 +1005,9 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         self._predict_check(input_data_x)
 
         data_len = input_data_x.shape[0]
-        layer_data_x = np.array(input_data_x, copy=True)
+        if self.param.normilize:
+            input_data_x = np.array(self.scaler.transform(input_data_x), copy=True)
+        layer_data_x = None
 
         prev_layer = None
         # calculate outputs of all layers except the last one
@@ -803,7 +1016,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
             prev_layer = self.layers[n]
 
         # calculate output for the last layer
-        # we choose the first (best) model of the last layer as output of multilayer gmdh
+        # we choose the first (best) model of the last layer as output of multilayered gmdh
         output_y = np.zeros([data_len], dtype=np.double)
         model = self.layers[-1][0]
         for i in range(0, input_data_x.shape[0]):
@@ -895,21 +1108,19 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         """Plot layer error on test set vs layer index
         """
 
+        fig = plt.figure()
         y = self.layer_err
         x = range(0, y.shape[0])
-        ax1 = plt.subplot(111)
-        ax1.plot(x, y)
+        ax1 = fig.add_subplot(111)
+        ax1.plot(x, y, 'b')
+        # ax1.plot(x, y, 'b', x, self.train_layer_err, 'g')
         ax1.set_title('Layer error on test set')
         plt.xlabel('layer index')
-        plt.ylabel('mse')
+        plt.ylabel('error')
         idx = len(self.layers)-1
-        # plt.ion()
         plt.plot(x[idx], y[idx], 'rD')
         plt.show()
 
-        #start_time = timeit.default_timer()
-        #elapsed = timeit.default_timer() - start_time
-        #print(elapsed)
 
 
 
