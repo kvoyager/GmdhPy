@@ -53,7 +53,7 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
                       criterion_minimum_width=5,
                       admix_features=True,
                       max_layer_count=50,
-                      normilize=True,
+                      normalize=True,
                       stop_train_epsilon_condition=0.0001,
                       layer_err_criterion='top',
                       alpha=0.5,
@@ -72,7 +72,10 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
             on the total data set (train and test)
 
     **example of using:**
+
+   ```py
         gmdh = MultilayerGMDH(criterion\_type='bias_retrain')
+   ```
 
 *    **seq\_type** - method to split data set to train and test
     *    ***'mode1'*** -   the default value
@@ -95,20 +98,19 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
                     ... train test test test train test ... train test test test train.
                     The last point is chosen to belong to train set
     *    ***'random'*** -  Random split data to train and test
-    *    ***'custom'*** -  custom way to split data to train and test
-                    set_custom\_seq\_type has to be provided
-                    Example:
-                     ```py
+    *    ***'custom'*** -  custom way to split data to train and test. set_custom\_seq\_type has to be provided.
+         Example:
+```py
                     def my_set_custom_sequence_type(seq_types):
                         r = np.random.uniform(-1, 1, seq_types.shape)
                         seq_types[:] = np.where(r > 0, DataSetType.dsTrain, DataSetType.dsTest)
                     MultilayerGMDH(seq_type='custom', set_custom_seq_type=my_set_custom_sequence_type)
-                ```
+```
 
     **example of using:**
-         ```py
+```py
         gmdh = MultilayerGMDH(seq_type='random')
-        ```
+```
 
 *    **max\_layer\_count** - maximum number of layers,
         the default value is mostly infinite (sys.maxsize)
@@ -134,9 +136,9 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
         to that number
 
     **example of using:**
-         ```py
+    ```py
         gmdh = MultilayerGMDH(manual_best_models_selection=True, min_best_models_count=20)
-         ```
+    ```
 
 *    **ref\_function\_types** - set of reference functions, by default the set contains linear combination of two inputs
         and covariation: y = w0 + w1\*x1 + w2\*x2 + w3\*x1\*x2
@@ -153,7 +155,7 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
          MultilayerGMDH(ref_functions=('quadratic', 'linear'))
          ```
 
-*    **normilize** - scale and normilize features if set to True. Default value is True
+*    **normalize** - scale and normalizefeatures if set to True. Default value is True
 
 *    **layer\_err\_criterion** - criterion of layer error calculation: 'top' - the topmost best model error is chosen
         as layer error; 'avg' - the layer error is the average error of the selected best models

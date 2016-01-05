@@ -118,7 +118,7 @@ class MultilayerGMDHparam(object):
          - MultilayerGMDH(ref_functions=('linear_cov', 'quadratic', 'cubic', 'linear'))
          - MultilayerGMDH(ref_functions=('quadratic', 'linear'))
 
-    normilize - scale and normilize features if set to True. Default value is True
+    normalize - scale and normalize features if set to True. Default value is True
 
     layer_err_criterion - criterion of layer error calculation: 'top' - the topmost best model error is chosen
         as layer error; 'avg' - the layer error is the average error of the selected best models
@@ -144,7 +144,7 @@ class MultilayerGMDHparam(object):
         self.stop_train_epsilon_condition = 0.001
         self.manual_best_models_selection = False
         self.min_best_models_count = 0
-        self.normilize = True
+        self.normalize = True
         self.layer_err_criterion = 'top'
         self.alpha = 0.5
         self.print_debug = True
@@ -162,7 +162,7 @@ class BaseMultilayerGMDH(object):
 
     def __init__(self, seq_type, set_custom_seq_type, ref_functions, criterion_type, feature_names, max_layer_count,
                  admix_features, manual_best_models_selection, min_best_models_count, criterion_minimum_width,
-                 stop_train_epsilon_condition, normilize, layer_err_criterion, alpha, print_debug, n_jobs):
+                 stop_train_epsilon_condition, normalize, layer_err_criterion, alpha, print_debug, n_jobs):
         self.param = MultilayerGMDHparam()                  # parameters
         self.param.seq_type = SequenceTypeSet.get(seq_type)
         if set_custom_seq_type is not None:
@@ -184,7 +184,7 @@ class BaseMultilayerGMDH(object):
         self.param.min_best_models_count = min_best_models_count
         self.param.criterion_minimum_width = criterion_minimum_width
         self.param.stop_train_epsilon_condition = stop_train_epsilon_condition
-        self.param.normilize = normilize
+        self.param.normalize = normalize
         self.param.layer_err_criterion = layer_err_criterion
         self.param.alpha = alpha
         self.param.print_debug = print_debug
@@ -402,7 +402,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                               criterion_minimum_width=5,
                               admix_features=True,
                               max_layer_count=50,
-                              normilize=True,
+                              normalize=True,
                               stop_train_epsilon_condition=0.001,
                               layer_err_criterion='avg',
                               alpha=0.5,
@@ -415,13 +415,13 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                  ref_functions=RefFunctionType.rfLinearCov,
                  criterion_type=CriterionType.cmpTest, feature_names=None, max_layer_count=50,
                  admix_features=True, manual_best_models_selection=False, min_best_models_count=5, criterion_minimum_width=5,
-                 stop_train_epsilon_condition=0.001, normilize=True, layer_err_criterion='top', alpha=0.5,
+                 stop_train_epsilon_condition=0.001, normalize=True, layer_err_criterion='top', alpha=0.5,
                  print_debug=True, n_jobs=1):
         super(self.__class__, self).__init__(seq_type, set_custom_seq_type,
                  ref_functions,
                  criterion_type, feature_names, max_layer_count,
                  admix_features, manual_best_models_selection, min_best_models_count, criterion_minimum_width,
-                 stop_train_epsilon_condition, normilize, layer_err_criterion, alpha, print_debug, n_jobs)
+                 stop_train_epsilon_condition, normalize, layer_err_criterion, alpha, print_debug, n_jobs)
 
     def __repr__(self):
         st = '*********************************************\n'
@@ -916,7 +916,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         data_x, data_y, self.data_len = train_preprocessing(data_x, data_y, self.feature_names)
         self.data_y = data_y
-        if self.param.normilize:
+        if self.param.normalize:
             self.scaler  = StandardScaler()
             self.data_x = self.scaler.fit_transform(data_x)
         else:
@@ -958,7 +958,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         # check validity of the model
         input_data_x, data_len = predict_preprocessing(input_data_x, self.n_features)
 
-        if self.param.normilize:
+        if self.param.normalize:
             input_data_x = np.array(self.scaler.transform(input_data_x), copy=True)
         layer_data_x = None
 

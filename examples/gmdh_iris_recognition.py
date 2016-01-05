@@ -74,7 +74,7 @@ if __name__ == '__main__':
                           criterion_minimum_width=5,
                           admix_features=True,
                           max_layer_count=50,
-                          normilize=True,
+                          normalize=True,
                           stop_train_epsilon_condition=0.0001,
                           layer_err_criterion='top',
                           alpha=0.5,
