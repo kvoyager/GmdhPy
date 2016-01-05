@@ -100,13 +100,13 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
     *    ***'random'*** -  Random split data to train and test
     *    ***'custom'*** -  custom way to split data to train and test. set_custom\_seq\_type has to be provided.
          Example:
-```py
+
+   ```py
                     def my_set_custom_sequence_type(seq_types):
                         r = np.random.uniform(-1, 1, seq_types.shape)
                         seq_types[:] = np.where(r > 0, DataSetType.dsTrain, DataSetType.dsTest)
-
                     MultilayerGMDH(seq_type='custom', set_custom_seq_type=my_set_custom_sequence_type)
-```
+   ```
 
     **example of using:**
 
@@ -151,12 +151,12 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
     *    'quadratic': full polynom of the 2-nd degree
     *    'cubic': - full polynom of the 3-rd degree
      
-   **examples of using:**
-         ```py
+    **examples of using:**
+    ```py
          MultilayerGMDH(ref_functions='linear')
          MultilayerGMDH(ref_functions=('linear_cov', 'quadratic', 'cubic', 'linear'))
          MultilayerGMDH(ref_functions=('quadratic', 'linear'))
-         ```
+    ```
 
 *    **normalize** - scale and normalizefeatures if set to True. Default value is True
 
