@@ -24,7 +24,7 @@ sudo pip install git+git://github.com/kvoyager/GmdhPy.git
 To uninstall GmdhPy:
 
 ```
-pip uninstall gmdhpy
+sudo pip uninstall gmdhpy
 ```
 
 ## Documentation
