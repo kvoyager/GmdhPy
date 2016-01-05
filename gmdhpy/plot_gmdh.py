@@ -1,8 +1,5 @@
 __author__ = 'Konstantin Kolokolov'
 
-from gmdh import MultilayerGMDH
-from gmdh_model import Model
-#import networkx as nx
 import graphviz as gv
 import functools
 graph = functools.partial(gv.Graph, format='svg')

@@ -15,7 +15,8 @@ def iris_class(value):
         return 2
     elif value <= 1.5 and value >= 0.5:
         return 1
-    return 0
+    else:
+        return 0
 
 
 def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
@@ -33,7 +34,6 @@ def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
 if __name__ == '__main__':
 
     iris = datasets.load_iris()
-    print(iris.data.shape)
 
     viris_class = np.vectorize(iris_class, otypes=[np.int])
 
@@ -52,10 +52,6 @@ if __name__ == '__main__':
         target[j+2] = iris.target[i+2*n]
         j += 3
 
-    # add random data to features
-    #eps = np.random.uniform(5, 15, (n_samples, 1))
-    #data = np.append(data, eps, axis=1)
-
     train_data_is_the_first_half = False
     n = n_samples // 2
     if train_data_is_the_first_half:
@@ -71,7 +67,6 @@ if __name__ == '__main__':
 
     svm_clf = svm.SVC(kernel='linear')
     svm_clf.fit(train_x, train_y)
-
 
     gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
                           criterion_type='test_bias',
@@ -113,6 +108,6 @@ if __name__ == '__main__':
     ax2 = fig.add_subplot(122)
     plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
 
-    PlotGMDH(gmdh, filename='img/iris_model', plot_model_name=True, view=False)
+    PlotGMDH(gmdh, filename='iris_model', plot_model_name=True, view=True)
     gmdh.plot_layer_error()
     plt.show()

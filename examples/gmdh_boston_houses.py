@@ -28,7 +28,7 @@ if __name__ == '__main__':
         exam_y = boston.target[:n]
 
     gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
-                          criterion_type='bias',
+                          criterion_type='test',
                           feature_names=boston.feature_names,
                           criterion_minimum_width=5,
                           admix_features=True,
@@ -38,8 +38,6 @@ if __name__ == '__main__':
                           layer_err_criterion='avg',
                           alpha=0.5,
                           n_jobs=2)
-
-
     gmdh.fit(train_x, train_y)
 
     # Now predict the value of the second half:
@@ -48,7 +46,10 @@ if __name__ == '__main__':
     mse = metrics.mean_squared_error(exam_y, y_pred)
     mae = metrics.mean_absolute_error(exam_y, y_pred)
 
-    PlotGMDH(gmdh, filename='img/boston_house_model', plot_model_name=True, view=False)
+    print("mse error on test set: {mse:0.2f}".format(mse=mse))
+    print("mae error on test set: {mae:0.2f}".format(mae=mae))
+
+    PlotGMDH(gmdh, filename='boston_house_model', plot_model_name=True, view=True)
 
     y_pred = gmdh.predict(exam_x)
 

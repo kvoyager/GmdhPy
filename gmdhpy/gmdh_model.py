@@ -2,13 +2,7 @@ __author__ = 'Konstantin Kolokolov'
 
 from enum import Enum
 import numpy as np
-import statsmodels.api as sm
-from numpy import ndarray
-import sys
-import math
 import types
-import multiprocessing.managers as mg
-from sklearn import metrics
 
 def _pickle_method(method):
      # if method.im_self is None:
@@ -21,6 +15,7 @@ def _pickle_method(method):
         cls_name = cls.__name__.lstrip('_')
         func_name = '_%s%s' % (cls_name, func_name)
     return _unpickle_method, (func_name, obj, cls)
+
 
 def _unpickle_method(func_name, obj, cls):
     if obj and func_name in obj.__dict__:
@@ -284,25 +279,6 @@ class PolynomModel(Model):
         return w[0] + w[1]*u1 + w[2]*u2 + w[3]*u1*u2 + w[4]*u1_sq + w[5]*u2_sq + \
             w[6]*u1*u1_sq + w[7]*u1_sq*u2 + w[8]*u1*u2_sq + w[9]*u2*u2_sq
 
-    # @classmethod
-    # def _transfer_linear(cls, u1, u2, w):
-    #     return w[0] + w[1]*u1 + w[2]*u2
-    #
-    # @classmethod
-    # def _transfer_linear_cov(cls, u1, u2, w):
-    #     return w[0] + u1*(w[1] + w[3]*u2) + w[2]*u2
-    #
-    # @classmethod
-    # def _transfer_quadratic(cls, u1, u2, w):
-    #     return w[0] + u1*(w[1] + w[3]*u2 + w[4]*u1) + u2*(w[2] + w[5]*u2)
-    #
-    # @classmethod
-    # def _transfer_cubic(cls, u1, u2, w):
-    #     u1_sq = u1*u1
-    #     u2_sq = u2*u2
-    #     return w[0] + w[1]*u1 + w[2]*u2 + w[3]*u1*u2 + w[4]*u1_sq + w[5]*u2_sq + \
-    #         w[6]*u1*u1_sq + w[7]*u1_sq*u2 + w[8]*u1*u2_sq + w[9]*u2*u2_sq
-
     def set_type(self, new_type):
         self.ref_function_type = new_type
         if new_type == RefFunctionType.rfLinear:
@@ -420,25 +396,6 @@ class LayerCreationError(Exception):
         self.layer_index = layer_index
 
 
-BaseLayerProxy = mg.MakeProxyType('BaseLayerProxy', (
-    '__add__', '__contains__', '__delitem__', '__delslice__',
-    '__getitem__', '__getslice__', '__len__', '__mul__',
-    '__reversed__', '__rmul__', '__setitem__', '__setslice__',
-    'append', 'count', 'extend', 'index', 'insert', 'pop', 'remove',
-    'reverse', 'sort', '__imul__', 'add_polynomial_model', 'add', 'delete',
-    'l_count', 'layer_index', 'n_features', 'err', 'valid', 'input_index_set'
-    ))
-
-
-class LayerProxy(BaseLayerProxy):
-    def __iadd__(self, value):
-        self._callmethod('extend', (value,))
-        return self
-    def __imul__(self, value):
-        self._callmethod('__imul__', (value,))
-        return self
-
-
 class Layer(list):
     """Layer class of multilayered group method of data handling algorithm
     """
@@ -487,29 +444,9 @@ class Layer(list):
 
 
 import sys
-if sys.version_info[2] == 2:
+if sys.version_info.major == 2:
     import copy_reg as cpr
     cpr.pickle(types.MethodType, _pickle_method, _unpickle_method)
-# else:
-#     import copyreg as cpr
-# cpr.pickle(types.MethodType, _pickle_method, _unpickle_method)
 
 
-'''
-#***********************************************************************************************************************
-#   GMDH layers
-#***********************************************************************************************************************
 
-class Layers(list):
-    """
-    Layers class of multilayer group method of data handling algorithm
-    """
-
-    def __init__(self, *args):
-        list.__init__(self, *args)
-
-    #def delete(self, index: int):
-    #    self.pop(index)
-
-    def append(self, layer: Layer):
-'''

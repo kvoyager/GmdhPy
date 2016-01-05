@@ -1,0 +1,25 @@
+*.DS_Store
+*.pyc
+*.swp
+temp/*
+dist/*
+build/*
+keras/datasets/data/*
+keras/datasets/temp/*
+docs/site/*
+docs/theme/*
+tags
+GmdhPy.egg-info
+
+# test-related
+.coverage
+.cache
+
+# developer environments
+.idea
+
+#aux files
+aux_files
+
+.hg
+__pycache__
