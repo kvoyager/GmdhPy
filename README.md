@@ -74,7 +74,7 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
     **example of using:**
 
    ```py
-        gmdh = MultilayerGMDH(criterion\_type='bias_retrain')
+        gmdh = MultilayerGMDH(criterion_type='bias_retrain')
    ```
 
 *    **seq\_type** - method to split data set to train and test
@@ -104,13 +104,15 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
                     def my_set_custom_sequence_type(seq_types):
                         r = np.random.uniform(-1, 1, seq_types.shape)
                         seq_types[:] = np.where(r > 0, DataSetType.dsTrain, DataSetType.dsTest)
+
                     MultilayerGMDH(seq_type='custom', set_custom_seq_type=my_set_custom_sequence_type)
 ```
 
     **example of using:**
-```py
+
+   ```py
         gmdh = MultilayerGMDH(seq_type='random')
-```
+   ```
 
 *    **max\_layer\_count** - maximum number of layers,
         the default value is mostly infinite (sys.maxsize)
@@ -136,6 +138,7 @@ gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
         to that number
 
     **example of using:**
+
     ```py
         gmdh = MultilayerGMDH(manual_best_models_selection=True, min_best_models_count=20)
     ```
