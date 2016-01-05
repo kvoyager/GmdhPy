@@ -10,9 +10,9 @@ setup(name='GmdhPy',
       url='https://github.com/kvoyager/GmdhPy',
       download_url='https://github.com/kvoyager/GmdhPy/archive/master.zip',
       license='MIT',
-      install_requires=['numpy', 'six', 'sklearn', 'matplotlib', 'multiprocessing'],
+      install_requires=['numpy', 'six', 'sklearn'],
       extras_require={
-          'graphviz': ['graphviz'],
+          'graphviz': ['graphviz', 'matplotlib'],
       },
       packages=find_packages()
       )
