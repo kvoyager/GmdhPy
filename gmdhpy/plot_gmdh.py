@@ -49,7 +49,7 @@ class PlotGMDH:
 
     def get_feature_name(self, index):
         s = 'F{0}'.format(index)
-        if len(self.gmdh.feature_names) > 0:
+        if self.gmdh.feature_names is not None and len(self.gmdh.feature_names) > 0:
             s += '\n{0}'.format(self.gmdh.feature_names[index])
         return s
 

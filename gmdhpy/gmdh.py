@@ -8,9 +8,9 @@ __version__ = '0.1.1'
 
 import numpy as np
 import sys
-from gmdh_model import RefFunctionType, CriterionType, SequenceTypeSet
-from gmdh_model import DataSetType, PolynomModel, Layer, LayerCreationError
-from data_preprocessing import train_preprocessing, predict_preprocessing
+from gmdhpy.gmdh_model import RefFunctionType, CriterionType, SequenceTypeSet
+from gmdhpy.gmdh_model import DataSetType, PolynomModel, Layer, LayerCreationError
+from gmdhpy.data_preprocessing import train_preprocessing, predict_preprocessing
 from sklearn.preprocessing import StandardScaler
 from sklearn import linear_model
 import matplotlib.pyplot as plt
@@ -385,7 +385,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
     Example of using:
 
-        data_x - training data, numpy array shape [n_samples,n_features]
+        data_x - training data, numpy array of shape [n_samples,n_features]
         data_y - target values, numpy array of shape [n_samples]
         exam_x - predicting data, numpy array of shape [exam_n_samples, n_features]
 
@@ -396,19 +396,17 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
     Example of using with parameters specification:
 
-        from gmdh import MultilayerGMDH, CriterionType
         gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
-                          criterion_type='bias',
-                          feature_names=boston.feature_names,
-                          criterion_minimum_width=5,
-                          admix_features=True,
-                          max_layer_count=50,
-                          normilize=True,
-                          stop_train_epsilon_condition=0.001,
-                          layer_err_criterion='avg',
-                          alpha=0.5,
-                          n_jobs=4)
-        gmdh.fit(data_x, data_y)
+                              criterion_type='test',
+                              feature_names=boston.feature_names,
+                              criterion_minimum_width=5,
+                              admix_features=True,
+                              max_layer_count=50,
+                              normilize=True,
+                              stop_train_epsilon_condition=0.001,
+                              layer_err_criterion='avg',
+                              alpha=0.5,
+                              n_jobs=2)
         exam_y = gmdh.predict(exam_x)
 
     Check MultilayerGMDHparam for details of parameters specification
@@ -951,7 +949,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         where
 
-        data_x - training data, numpy array shape [n_samples, n_features]
+        data_x - training data, numpy array of shape [n_samples, n_features]
         data_y - target values, numpy array of shape [n_samples]
         predict_x - samples to be predicted, numpy array of shape [predicted_n_samples, n_features]
         """

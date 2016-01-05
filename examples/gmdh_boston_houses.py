@@ -4,8 +4,8 @@ __author__ = 'Konstantin Kolokolov'
 
 from sklearn.datasets import load_boston
 from sklearn import metrics
-from gmdh import MultilayerGMDH
-from plot_gmdh import PlotGMDH
+from gmdhpy.gmdh import MultilayerGMDH
+from gmdhpy.plot_gmdh import PlotGMDH
 
 
 if __name__ == '__main__':

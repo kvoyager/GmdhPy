@@ -3,18 +3,17 @@ digraph {
  " labelloc=t]
 		OUTPUT [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
 		subgraph {
-			"F0
-sepal length (cm)" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F1
-sepal width (cm)" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F2
-petal length (cm)" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F3
-petal width (cm)" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F0 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F1 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F2 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F3 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
 		}
 		subgraph {
 			"layer 0
 model 0
+linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
+			"layer 0
+model 1
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
 		subgraph {
@@ -22,21 +21,26 @@ linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=fi
 model 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
-			"F0
-sepal length (cm)" -> "layer 0
+			F0 -> "layer 0
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F3
-petal width (cm)" -> "layer 0
+			F2 -> "layer 0
 model 0
+linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
+			F0 -> "layer 0
+model 1
+linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
+			F3 -> "layer 0
+model 1
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 0
 model 0
 linear cov" -> "layer 1
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F2
-petal length (cm)" -> "layer 1
+			"layer 0
+model 1
+linear cov" -> "layer 1
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 1

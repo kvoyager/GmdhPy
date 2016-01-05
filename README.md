@@ -1,131 +1,176 @@
-GmdhPy
-=====
+# GmdhPy
+
 Multilayered iterational algorithm of the Group Method of Data Handling for Python
 
-Documentation
-=============
-Training
---------
+
+## Installation
+
+GmdhPy uses the following dependencies:
+
+- numpy
+- six
+- scikit-learn
+- matplotlib (optional, required if you use plotting tools)
+- graphviz (optional but recommended if you want to plot model graph, requires installation of binaries from http://www.graphviz.org/ as well)
+
+To install GmdhPy:
+
+```
+sudo pip install git+git://github.com/kvoyager/GmdhPy.git
+```
+
+To uninstall GmdhPy:
+
+```
+pip uninstall gmdhpy
+```
+
+## Documentation
+### Training
 ```py
-from gmdh import MultilayerGMDH
+from gmdhpy.gmdh import MultilayerGMDH
 gmdh = MultilayerGMDH()
 gmdh.fit(data_x, data_y)
 ```
 where
-* data_x - training data, numpy array shape [n_samples, n_features]
-* data_y - target values, numpy array of shape [n_samples]
+* data\_x - training data, numpy array of shape [n\_samples, n\_features]
+* data\_y - target values, numpy array of shape [n\_samples]
 
-Predict
--------
+### Predict
+
 ```py
 exam_y = gmdh.predict(exam_x)
 ```
 where
-* exam_x - predicting data, numpy array of shape [exam_n_samples, n_features]
+* exam\_x - predicting data, numpy array of shape [exam\_n\_samples, n\_features]
 
-Setting Parameters
-------------------
+### Setting Parameters
+
 ```py
-from gmdh import MultilayerGMDH, CriterionType
-gmdh = MultilayerGMDH()
-gmdh.param.criterion_type = CriterionType.cmpComb_bias_retrain
-gmdh.fit(data_x, data_y)
+gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
+                      criterion_type='test_bias',
+                      feature_names=iris.feature_names,
+                      criterion_minimum_width=5,
+                      admix_features=True,
+                      max_layer_count=50,
+                      normilize=True,
+                      stop_train_epsilon_condition=0.0001,
+                      layer_err_criterion='top',
+                      alpha=0.5,
+                      n_jobs=4)
 ```
 ##### Parameters description:
-* **admix_features** - if set to true the original features will be added to the list of features of each layer
+*    **admix\_features** - if set to true the original features will be added to the list of features of each layer
         default value is true
 
-* **criterion_type** - criterion for selecting best models
-    the following criteria are possible:
-    * ***cmpTest***: the default value,
+*    **criterion\_type** - criterion for selecting best models. The following criteria are possible:
+    *    ***'test'***: the default value,
             models are compared on the basis of test error
-    *   ***cmpBias***: models are compared on the basis of bias error
-    *    ***cmpComb_train_bias***: combined criterion, models are compared on the basis of bias and train errors
-    *    ***cmpComb_test_bias***: combined criterion, models are compared on the basis of bias and test errors
-    *    ***cmpComb_bias_retrain***: firstly, models are compared on the basis of bias error, then models are retrain
+    *    ***'bias'***: models are compared on the basis of bias error
+    *    ***'test_bias'***: combined criterion, models are compared on the basis of bias and test errors
+    *    ***'bias_retrain'***: firstly, models are compared on the basis of bias error, then models are retrain
             on the total data set (train and test)
-    * **example of using**:
-    ```py
-        from gmdh import MultilayerGMDH, CriterionType
-        gmdh = MultilayerGMDH()
-        gmdh.param.criterion_type = CriterionType.cmpComb_bias_retrain
-    ```
 
-* **seq_type** - method to split data set to train and test
-    * ***sqMode1*** - 	the default value
+    **example of using:**
+        gmdh = MultilayerGMDH(criterion\_type='bias_retrain')
+
+*    **seq\_type** - method to split data set to train and test
+    *    ***'mode1'*** -   the default value
                     data set is split to train and test data sets in the following way:
                     ... train test train test train test ... train test.
                     The last point is chosen to belong to test set
-    * ***sqMode2*** - 	data set is split to train and test data sets in the following way:
+    *    ***'mode2'*** -   data set is split to train and test data sets in the following way:
                     ... train test train test train test ... test train.
                     The last point is chosen to belong to train set
-    * ***sqMode3_1*** - data set is split to train and test data sets in the following way:
+    *    ***'mode3_1'*** - data set is split to train and test data sets in the following way:
                     ... train test train train test train train test ... train train test.
                     The last point is chosen to belong to test set
-    * ***sqMode4_1*** - data set is split to train and test data sets in the following way:
+    *    ***'mode4_1'*** - data set is split to train and test data sets in the following way:
                     ... train test train train train test ... test train train train test.
                     The last point is chosen to belong to test set
-    * ***sqMode3_2*** - data set is split to train and test data sets in the following way:
+    *    ***'mode3_2'*** - data set is split to train and test data sets in the following way:
                     ... train test test train test test train test ... test test train.
                     The last point is chosen to belong to train set
-    * ***sqMode4_2*** - data set is split to train and test data sets in the following way:
+    *    ***'mode4_2'*** - data set is split to train and test data sets in the following way:
                     ... train test test test train test ... train test test test train.
                     The last point is chosen to belong to train set
-    * ***sqRandom*** -  Random split data to train and test
-    * ***sqCustom*** -  custom way to split data to train and test
-                    set_custom_seq_type has to be provided
+    *    ***'random'*** -  Random split data to train and test
+    *    ***'custom'*** -  custom way to split data to train and test
+                    set_custom\_seq\_type has to be provided
                     Example:
-    ```py
-    def my_set_custom_sequence_type(seq_types):
-        r = np.random.uniform(-1, 1, seq_types.shape)
-        seq_types[:] = np.where(r > 0, DataSetType.dsTrain, DataSetType.dsTest)
-    gmdh.param.seq_type = SequenceTypeSet.sqCustom
-    gmdh.param.set_custom_seq_type = my_set_custom_sequence_type
-    ```
-    * **example of using**:
-    ```py
-        from gmdh import MultilayerGMDH, SequenceTypeSet
-        gmdh = MultilayerGMDH()
-        gmdh.param.seq_type = SequenceTypeSet.sqMode2
-    ```
+                     ```py
+                    def my_set_custom_sequence_type(seq_types):
+                        r = np.random.uniform(-1, 1, seq_types.shape)
+                        seq_types[:] = np.where(r > 0, DataSetType.dsTrain, DataSetType.dsTest)
+                    MultilayerGMDH(seq_type='custom', set_custom_seq_type=my_set_custom_sequence_type)
+                ```
 
-* **max_layer_count** - maximum number of layers,
+    **example of using:**
+         ```py
+        gmdh = MultilayerGMDH(seq_type='random')
+        ```
+
+*    **max\_layer\_count** - maximum number of layers,
         the default value is mostly infinite (sys.maxsize)
 
-* **criterion_minimum_width** - minimum number of layers at the right required to evaluate optimal number of layer
+*    **criterion\_minimum\_width** - minimum number of layers at the right required to evaluate optimal number of layer
         (the optimal model) according to the minimum of criteria. For example, if it is found that
          criterion value has minimum at layer with index 10, the algorithm will proceed till the layer
          with index 15
          the default value is 5
 
-* **manual_min_l_count_value** - if this value set to False, the number of best models to be
+*    **stop\_train\_epsilon\_condition** - the threshold to stop train. If the layer relative training error in compare
+        with minimum layer error becomes smaller than stop\_train\_epsilon_condition the train is stopped. Default value is
+        0.001
+
+*    **manual\_best\_models\_selection** - if this value set to False, the number of best models to be
         selected is determined automatically and it is equal number of original features.
         Otherwise the number of best models to be selected is determined as
-        max(original features, min_l_count). min_l_count has to be provided
+        max(original features, min\_best\_models\_count). The value min\_best\_models\_count has to be provided.
         For example, if you have N=10 features, the number of all generated models will be at least
-        N*(N-1)/2=45, the number of selected best models will be 10, but you increase this number to
-        20 by setting manual_min_l_count_value = True and min_l_count = 20
-        Note: if min_l_count is larger than number of generated models of the layer it will be reduced
+        N*(N-1)/2=45, the number of selected best models will be 10, but you can increase this number to
+        20 by setting manual\_min\_l\_count\_value = True and min\_best\_models\_count = 20.
+        Note: if min\_best\_models\_count is larger than number of generated models of the layer it will be reduced
         to that number
-    * **example of using**:
-    ```py
-        from gmdh import MultilayerGMDH
-        gmdh = MultilayerGMDH()
-        gmdh.param.manual_min_l_count_value = True
-        gmdh.param.min_l_count = 20
-    ```
 
-* **ref_function_types** - set of reference functions, by default the set contains polynom
-        of the second degree: y = w0 + w1*x1 + w2*x2 + w3*x1*x2
-        you can add other reference functions in the following way:
-    * param.ref_function_types.add(RefFunctionType.rfLinear) - y = w0 + w1*x1 + w2*x2
-    * param.ref_function_types.add(RefFunctionType.rfQuadratic) - full polynom of the 2-nd degree
-    * param.ref_function_types.add(RefFunctionType.rfCubic) - full polynom of the 3-rd degree
-    
+    **example of using:**
+         ```py
+        gmdh = MultilayerGMDH(manual_best_models_selection=True, min_best_models_count=20)
+         ```
 
-# License
+*    **ref\_function\_types** - set of reference functions, by default the set contains linear combination of two inputs
+        and covariation: y = w0 + w1\*x1 + w2\*x2 + w3\*x1\*x2
+        you can add other reference functions:
+    *    'linear': y = w0 + w1\*x1 + w2\*x2
+    *    'linear_cov': y = w0 + w1\*x1 + w2\*x2 + w3\*x1\*x2
+    *    'quadratic': full polynom of the 2-nd degree
+    *    'cubic': - full polynom of the 3-rd degree
+     
+   **examples of using:**
+         ```py
+         MultilayerGMDH(ref_functions='linear')
+         MultilayerGMDH(ref_functions=('linear_cov', 'quadratic', 'cubic', 'linear'))
+         MultilayerGMDH(ref_functions=('quadratic', 'linear'))
+         ```
+
+*    **normilize** - scale and normilize features if set to True. Default value is True
+
+*    **layer\_err\_criterion** - criterion of layer error calculation: 'top' - the topmost best model error is chosen
+        as layer error; 'avg' - the layer error is the average error of the selected best models
+        default value is 'top'
+
+*    **alpha** - alpha value used in model train by Ridge regression (see scikit-learn linear_model.Ridge)
+        default value is 0.5
+
+*    **print\_debug** - print debug information while training, default = true
+
+*    **n\_jobs** - number of parallel processes(threads) to train model, default 1. Use 'max' to train using
+        all available threads.
+
+
+## License
 MIT
 
-# References
+## References
 - https://en.wikipedia.org/wiki/Group_method_of_data_handling
 - http://www.gmdh.net/

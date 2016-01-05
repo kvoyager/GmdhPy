@@ -6,8 +6,8 @@ import numpy as np
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, metrics
 from sklearn.metrics import confusion_matrix
-from gmdh import MultilayerGMDH
-from plot_gmdh import PlotGMDH
+from gmdhpy.gmdh import MultilayerGMDH
+from gmdhpy.plot_gmdh import PlotGMDH
 
 
 def iris_class(value):
