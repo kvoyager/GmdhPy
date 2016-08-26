@@ -3,9 +3,9 @@ from setuptools import find_packages
 
 
 setup(name='GmdhPy',
-      version='0.1.1',
+      version='0.1.1a',
       description='Multilayered group method of data handling of Machine learning for Python',
-      author='Konstantin Kolokolov',
+      author='kvoyager',
       author_email='konstantin.kolokolov@gmail.com',
       url='https://github.com/kvoyager/GmdhPy',
       download_url='https://github.com/kvoyager/GmdhPy/archive/master.zip',

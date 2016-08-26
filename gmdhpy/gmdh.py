@@ -149,6 +149,7 @@ class MultilayerGMDHparam(object):
         self.alpha = 0.5
         self.print_debug = True
         self.n_jobs = 1
+        self.keep_partial_models = False
 
     @classmethod
     def dummy_set_custom_sequence_type(cls, seq_types):
@@ -162,7 +163,8 @@ class BaseMultilayerGMDH(object):
 
     def __init__(self, seq_type, set_custom_seq_type, ref_functions, criterion_type, feature_names, max_layer_count,
                  admix_features, manual_best_models_selection, min_best_models_count, criterion_minimum_width,
-                 stop_train_epsilon_condition, normalize, layer_err_criterion, alpha, print_debug, n_jobs):
+                 stop_train_epsilon_condition, normalize, layer_err_criterion, alpha, print_debug,
+                 keep_partial_models, n_jobs):
         self.param = MultilayerGMDHparam()                  # parameters
         self.param.seq_type = SequenceTypeSet.get(seq_type)
         if set_custom_seq_type is not None:
@@ -188,6 +190,7 @@ class BaseMultilayerGMDH(object):
         self.param.layer_err_criterion = layer_err_criterion
         self.param.alpha = alpha
         self.param.print_debug = print_debug
+        self.keep_partial_models = keep_partial_models
 
         if isinstance(n_jobs, six.string_types):
             if n_jobs == 'max':
@@ -416,12 +419,13 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                  criterion_type=CriterionType.cmpTest, feature_names=None, max_layer_count=50,
                  admix_features=True, manual_best_models_selection=False, min_best_models_count=5, criterion_minimum_width=5,
                  stop_train_epsilon_condition=0.001, normalize=True, layer_err_criterion='top', alpha=0.5,
-                 print_debug=True, n_jobs=1):
+                 print_debug=True, keep_partial_models=False, n_jobs=1):
         super(self.__class__, self).__init__(seq_type, set_custom_seq_type,
                  ref_functions,
                  criterion_type, feature_names, max_layer_count,
                  admix_features, manual_best_models_selection, min_best_models_count, criterion_minimum_width,
-                 stop_train_epsilon_condition, normalize, layer_err_criterion, alpha, print_debug, n_jobs)
+                 stop_train_epsilon_condition, normalize, layer_err_criterion, alpha, print_debug,
+                 keep_partial_models, n_jobs)
 
     def __repr__(self):
         st = '*********************************************\n'
@@ -829,7 +833,8 @@ class MultilayerGMDH(BaseMultilayerGMDH):
             del self.layers[error_min_index+1:]
             # to be implemented - delete invalid models
 
-            self._delete_unused_models()
+            if not self.keep_partial_models:
+                self._delete_unused_models()
 
         if self.param.n_jobs > 1:
             self.pool = None
@@ -1005,7 +1010,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                         selected_features_set.add(u2_index)
         return list(selected_features_set)
 
-    def _get_n_featuresames(self, features_set):
+    def _get_n_features_names(self, features_set):
         """
         Return names of features
         """
@@ -1032,7 +1037,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         features.extend(range(0, self.n_features))
         return list(set(features) - set(selected_features_set))
 
-    def get_unselected_n_featuresames(self):
+    def get_unselected_n_features_names(self):
         """
         Return names of features that was not selected as useful for model during fit
 
@@ -1044,9 +1049,9 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         if len(unselected_features) == 0:
             return "No unselected features"
         else:
-            return self._get_n_featuresames(unselected_features)
+            return self._get_n_features_names(unselected_features)
 
-    def get_selected_n_featuresames(self):
+    def get_selected_n_features_names(self):
         """
         Return names of features that was selected as useful for model during fit
 
@@ -1054,7 +1059,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         -------
         string
         """
-        return self._get_n_featuresames(self.get_selected_features())
+        return self._get_n_features_names(self.get_selected_features())
 
 
     def plot_layer_error(self):

@@ -23,3 +23,5 @@ aux_files
 
 .hg
 __pycache__
+unloap_to_pypi.bat
+build_all.bat
