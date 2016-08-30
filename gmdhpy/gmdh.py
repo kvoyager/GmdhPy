@@ -97,14 +97,21 @@ class MultilayerGMDHparam(object):
     manual_best_models_selection - if this value set to False, the number of best models to be
         selected is determined automatically and it is equal number of original features.
         Otherwise the number of best models to be selected is determined as
-        max(original features, min_best_models_count). min_best_models_count has to be provided
-        For example, if you have N=10 features, the number of all generated models will be at least
-        N*(N-1)/2=45, the number of selected best models will be 10, but you increase this number to
-        20 by setting manual_min_l_count_value = True and min_best_models_count = 20
+        max(original features, min_best_models_count) but not more than max_best_models_count.
+        min_best_models_count (default 5) or max_best_models_count (default inf) have to be provided.
+        For example, if you have N=10 features, the number of all generated models will be
+        N*(N-1)/2=45, the number of selected best models will be 10, but you can increase this number to
+        20 by setting manual_min_l_count_value = True and min_best_models_count = 20.
+        If you have N=100 features, the number of all generated models will be
+        N*(N-1)/2=4950, by default the number of partial models passed to the second layer is equal to the number of
+        features = 100. If you want to reduce this number for some smaller number, 50 for example, set
+        manual_best_models_selection=True and max_best_models_count=50.
         Note: if min_best_models_count is larger than number of generated models of the layer it will be reduced
         to that number
     example of using:
         gmdh = MultilayerGMDH(manual_best_models_selection=True, min_best_models_count=20)
+        or
+        gmdh = MultilayerGMDH(manual_best_models_selection=True, max_best_models_count=50)
 
     ref_function_types - set of reference functions, by default the set contains linear combination of two inputs
         and covariation: y = w0 + w1*x1 + w2*x2 + w3*x1*x2
@@ -144,6 +151,7 @@ class MultilayerGMDHparam(object):
         self.stop_train_epsilon_condition = 0.001
         self.manual_best_models_selection = False
         self.min_best_models_count = 0
+        self.max_best_models_count = 0
         self.normalize = True
         self.layer_err_criterion = 'top'
         self.alpha = 0.5
@@ -162,9 +170,9 @@ class BaseMultilayerGMDH(object):
     """
 
     def __init__(self, seq_type, set_custom_seq_type, ref_functions, criterion_type, feature_names, max_layer_count,
-                 admix_features, manual_best_models_selection, min_best_models_count, criterion_minimum_width,
-                 stop_train_epsilon_condition, normalize, layer_err_criterion, alpha, print_debug,
-                 keep_partial_models, n_jobs):
+                 admix_features, manual_best_models_selection, min_best_models_count, max_best_models_count,
+                 criterion_minimum_width, stop_train_epsilon_condition, normalize, layer_err_criterion, alpha,
+                 print_debug, keep_partial_models, n_jobs):
         self.param = MultilayerGMDHparam()                  # parameters
         self.param.seq_type = SequenceTypeSet.get(seq_type)
         if set_custom_seq_type is not None:
@@ -184,6 +192,7 @@ class BaseMultilayerGMDH(object):
         self.param.admix_features = admix_features
         self.param.manual_best_models_selection = manual_best_models_selection
         self.param.min_best_models_count = min_best_models_count
+        self.param.max_best_models_count = max_best_models_count
         self.param.criterion_minimum_width = criterion_minimum_width
         self.param.stop_train_epsilon_condition = stop_train_epsilon_condition
         self.param.normalize = normalize
@@ -231,6 +240,7 @@ class BaseMultilayerGMDH(object):
 
         if self.param.manual_best_models_selection:
             layer.l_count = max(layer.l_count, self.param.min_best_models_count)
+            layer.l_count = min(layer.l_count, self.param.max_best_models_count)
         # the number of selected best models can't be larger than the total number of models in the layer
         if self.param.admix_features and layer.layer_index == 0:
             layer.l_count = min(layer.l_count, 2*len(layer))
@@ -417,15 +427,16 @@ class MultilayerGMDH(BaseMultilayerGMDH):
     def __init__(self, seq_type=SequenceTypeSet.sqMode1, set_custom_seq_type=None,
                  ref_functions=RefFunctionType.rfLinearCov,
                  criterion_type=CriterionType.cmpTest, feature_names=None, max_layer_count=50,
-                 admix_features=True, manual_best_models_selection=False, min_best_models_count=5, criterion_minimum_width=5,
+                 admix_features=True, manual_best_models_selection=False, min_best_models_count=5,
+                 max_best_models_count=10000000, criterion_minimum_width=5,
                  stop_train_epsilon_condition=0.001, normalize=True, layer_err_criterion='top', alpha=0.5,
                  print_debug=True, keep_partial_models=False, n_jobs=1):
         super(self.__class__, self).__init__(seq_type, set_custom_seq_type,
                  ref_functions,
                  criterion_type, feature_names, max_layer_count,
-                 admix_features, manual_best_models_selection, min_best_models_count, criterion_minimum_width,
-                 stop_train_epsilon_condition, normalize, layer_err_criterion, alpha, print_debug,
-                 keep_partial_models, n_jobs)
+                 admix_features, manual_best_models_selection, min_best_models_count, max_best_models_count,
+                 criterion_minimum_width, stop_train_epsilon_condition, normalize, layer_err_criterion, alpha,
+                 print_debug, keep_partial_models, n_jobs)
 
     def __repr__(self):
         st = '*********************************************\n'
@@ -438,13 +449,13 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         s += 'Model selection criterion: {0}\n'.format(CriterionType.get_name(self.param.criterion_type))
         s += 'Number of features: {0}\n'.format(self.n_features)
         s += 'Include features to inputs list for each layer: {0}\n'.format(self.param.admix_features)
-        s += 'Data size: {0}\n'.format(self.data_x.shape[0])
+        s += 'Data size: {0}\n'.format(self.n_train + self.n_test)
         s += 'Train data size: {0}\n'.format(self.n_train)
         s += 'Test data size: {0}\n'.format(self.n_test)
         s += 'Selected features by index: {0}\n'.format(self.get_selected_features())
-        s += 'Selected features by name: {0}\n'.format(self.get_selected_n_featuresames())
+        s += 'Selected features by name: {0}\n'.format(self.get_selected_n_features_names())
         s += 'Unselected features by index: {0}\n'.format(self.get_unselected_features())
-        s += 'Unselected features by name: {0}\n'.format(self.get_unselected_n_featuresames())
+        s += 'Unselected features by name: {0}\n'.format(self.get_unselected_n_features_names())
         s += '\n'
         for n, layer in enumerate(self.layers):
             s += layer.__repr__()
@@ -977,6 +988,38 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         # we choose the first (best) model of the last layer as output of multilayered gmdh
         output_y = np.zeros([data_len], dtype=np.double)
         model = self.layers[-1][0]
+        for i in range(0, input_data_x.shape[0]):
+            u1 = layer_data_x[i, model.u1_index]
+            u2 = layer_data_x[i, model.u2_index]
+            output_y[i] = model.transfer(u1, u2, model.w)
+
+        return output_y
+
+    def predict_neuron_output(self, input_data_x, layer_idx, neuron_idx):
+
+        if layer_idx >= len(self.layers) or layer_idx < 0:
+            raise ValueError('layer index is out of range')
+        if neuron_idx >= len(self.layers[layer_idx]) or neuron_idx < 0:
+            raise ValueError('neuron index is out of range')
+
+        # check dimensions
+        # check validity of the model
+        input_data_x, data_len = predict_preprocessing(input_data_x, self.n_features)
+
+        if self.param.normalize:
+            input_data_x = np.array(self.scaler.transform(input_data_x), copy=True)
+        layer_data_x = None
+
+        prev_layer = None
+        # calculate outputs of all layers with indexes up to layer_idx
+        for n in range(0, max(1, layer_idx - 1)):
+            layer_data_x = self._set_internal_data(prev_layer, input_data_x, layer_data_x)
+            prev_layer = self.layers[n]
+
+        # calculate output for the last layer
+        # we choose the first (best) model of the last layer as output of multilayered gmdh
+        output_y = np.zeros([data_len], dtype=np.double)
+        model = self.layers[layer_idx][neuron_idx]
         for i in range(0, input_data_x.shape[0]):
             u1 = layer_data_x[i, model.u1_index]
             u2 = layer_data_x[i, model.u2_index]

@@ -111,3 +111,4 @@ if __name__ == '__main__':
     PlotGMDH(gmdh, filename='iris_model', plot_model_name=True, view=True)
     gmdh.plot_layer_error()
     plt.show()
+    print(gmdh)
