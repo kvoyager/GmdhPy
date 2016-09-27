@@ -32,12 +32,12 @@ if __name__ == '__main__':
                           feature_names=boston.feature_names,
                           criterion_minimum_width=5,
                           admix_features=True,
-                          max_layer_count=50,
+                          max_layer_count=10,
                           normalize=True,
                           stop_train_epsilon_condition=0.001,
                           layer_err_criterion='avg',
                           alpha=0.5,
-                          n_jobs=2)
+                          n_jobs=1)
     gmdh.fit(train_x, train_y)
 
     # Now predict the value of the second half:

@@ -91,39 +91,28 @@ linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=fi
 			"layer 6
 model 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
+			"layer 6
+model 1
+linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
 		subgraph {
 			"layer 7
 model 0
+linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
+			"layer 7
+model 1
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
 		subgraph {
 			"layer 8
 model 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
+			"layer 8
+model 1
+linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
 		subgraph {
 			"layer 9
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 10
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 11
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 12
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 13
 model 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
@@ -267,22 +256,40 @@ model 0
 linear cov" -> "layer 6
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
+			"F0
+CRIM" -> "layer 6
+model 0
+linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
+			"layer 5
+model 0
+linear cov" -> "layer 6
+model 1
+linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 5
 model 1
 linear cov" -> "layer 6
-model 0
+model 1
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 6
 model 0
 linear cov" -> "layer 7
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F0
-CRIM" -> "layer 7
+			"F1
+ZN" -> "layer 7
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
+			"layer 6
+model 1
+linear cov" -> "layer 7
+model 1
+linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
+			"F0
+CRIM" -> "layer 7
+model 1
+linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 7
-model 0
+model 1
 linear cov" -> "layer 8
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
@@ -290,52 +297,26 @@ linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 RAD" -> "layer 8
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
+			"layer 7
+model 0
+linear cov" -> "layer 8
+model 1
+linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
+			"F8
+RAD" -> "layer 8
+model 1
+linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 8
 model 0
 linear cov" -> "layer 9
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F1
-ZN" -> "layer 9
+			"layer 8
+model 1
+linear cov" -> "layer 9
 model 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 9
-model 0
-linear cov" -> "layer 10
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F8
-RAD" -> "layer 10
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 10
-model 0
-linear cov" -> "layer 11
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F0
-CRIM" -> "layer 11
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 11
-model 0
-linear cov" -> "layer 12
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F8
-RAD" -> "layer 12
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 12
-model 0
-linear cov" -> "layer 13
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F4
-NOX" -> "layer 13
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 13
 model 0
 linear cov" -> OUTPUT [color="#cde8ef" fillcolor="#3499cd" weight=1]
 }

@@ -8,17 +8,22 @@ __version__ = '0.1.1'
 
 import numpy as np
 import sys
-from gmdhpy.gmdh_model import RefFunctionType, CriterionType, SequenceTypeSet
-from gmdhpy.gmdh_model import DataSetType, PolynomModel, Layer, LayerCreationError
+from gmdhpy.gmdh_model import RefFunctionType, CriterionType, SequenceTypeSet, DataSetType
+from gmdhpy.polynom import PolynomModel
+from gmdhpy.layer import Layer, LayerCreationError
 from gmdhpy.data_preprocessing import train_preprocessing, predict_preprocessing
 from sklearn.preprocessing import StandardScaler
 from sklearn import linear_model
+from sklearn.cross_decomposition import PLSRegression
 import matplotlib.pyplot as plt
 from multiprocessing import Pool, Manager
 import multiprocessing as mp
 import six
 import time
 
+
+def get_y_components(data_y):
+    return 1 if len(data_y.shape) == 1 else data_y.shape[1]
 
 # **********************************************************************************************************************
 #   implementation of multilayered GMDH algorithm
@@ -95,7 +100,7 @@ class MultilayerGMDHparam(object):
         0.001
 
     manual_best_models_selection - if this value set to False, the number of best models to be
-        selected is determined automatically and it is equal number of original features.
+        selected is determined automatically and it is equal to the number of original features.
         Otherwise the number of best models to be selected is determined as
         max(original features, min_best_models_count) but not more than max_best_models_count.
         min_best_models_count (default 5) or max_best_models_count (default inf) have to be provided.
@@ -232,6 +237,7 @@ class BaseMultilayerGMDH(object):
         self.layer_err = np.array([], dtype=np.double)          # array of layer's errors
         self.train_layer_err = np.array([], dtype=np.double)    # array of layer's train errors
         self.valid = False
+        self.y_components = None                                # number of components in Y
 
     def _select_best_models(self, layer):
         """
@@ -283,6 +289,13 @@ class BaseMultilayerGMDH(object):
                     raise NotImplementedError
 
 
+    def _y_alloc(self, n):
+        if self.y_components == 1:
+            y = np.empty((n,), dtype=np.double)
+        else:
+            y = np.empty((n, self.y_components), dtype=np.double)
+        return y
+
 # **********************************************************************************************************************
 #   MultilayerGMDH class
 # **********************************************************************************************************************
@@ -324,13 +337,27 @@ def set_matrix_a(ftype, u1_index, u2_index, source, source_y, a, y):
 
 
 def train_model(alpha, a, y):
-    clf = linear_model.Ridge(alpha=alpha, solver='lsqr')
-    a2 = a[:,1:]
-    clf.fit(a2, y)
-    w = np.empty((len(clf.coef_) + 1,), dtype=np.double)
-    w[0] = clf.intercept_
-    w[1:] = clf.coef_
-    return w
+    y_components = get_y_components(y)
+    a2 = a[:, 1:]
+    if y_components == 1:
+        clf = linear_model.Ridge(alpha=alpha, solver='lsqr')
+        clf.fit(a2, y)
+        w = np.empty((len(clf.coef_) + 1,), dtype=np.double)
+        w[0] = clf.intercept_
+        w[1:] = clf.coef_
+        return w
+    elif y_components > 1:
+        pls2 = PLSRegression(n_components=y_components)
+        pls2.fit(a2, y)
+        clf = linear_model.Ridge(alpha=alpha, solver='lsqr')
+        clf.fit(a2, y[:, 0])
+        pass
+        # w = np.empty((len(clf.coef_) + 1,), dtype=np.double)
+        # w[0] = clf.intercept_
+        # w[1:] = clf.coef_
+        # return w
+    else:
+        raise ValueError('y_components < 1')
 
 
 def sub_calculate_model_weights(n, ftype, u1_index, u2_index, fw_size, need_bias_stuff, transfer,
@@ -338,10 +365,10 @@ def sub_calculate_model_weights(n, ftype, u1_index, u2_index, fw_size, need_bias
     """
     Calculate model coefficients
     """
-
+    y_components = get_y_components(train_y)
     # declare Y variables of multiple linear regression for train and test targets
-    ya = np.empty((n_train,), dtype=np.double)
-    yb = np.empty((n_test,), dtype=np.double)
+    ya = np.empty(n_train, dtype=np.double)
+    yb = np.empty(n_test, dtype=np.double)
     min_rank = 2
     rank_b = 10000000
 
@@ -513,7 +540,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         """
         data_len = self.n_train + self.n_test
         a = np.empty((data_len, model.fw_size), dtype=np.double)
-        y = np.empty((data_len,), dtype=np.double)
+        y = np.empty(data_len, dtype=np.double)
         set_matrix_a(model.ftype, model.u1_index, model.u2_index, self.layer_data_x, self.data_y, a, y)
         # Train the model using all data (train and test sets)
         try:
@@ -866,9 +893,9 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         # allocate arrays for train and test sets
         self.input_train_x = np.empty((self.n_train, self.n_features), dtype=np.double)
-        self.train_y = np.empty((self.n_train,), dtype=np.double)
+        self.train_y = np.empty(self.n_train, dtype=np.double)
         self.input_test_x = np.empty((self.n_test, self.n_features), dtype=np.double)
-        self.test_y = np.empty((self.n_test,), dtype=np.double)
+        self.test_y = np.empty(self.n_test, dtype=np.double)
 
         # set train and test data sets
         self._set_sequence(self.input_train_x, self.train_y, DataSetType.dsTrain)
@@ -932,6 +959,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
 
         data_x, data_y, self.data_len = train_preprocessing(data_x, data_y, self.feature_names)
         self.data_y = data_y
+        self.y_components = get_y_components(data_y)
         if self.param.normalize:
             self.scaler  = StandardScaler()
             self.data_x = self.scaler.fit_transform(data_x)

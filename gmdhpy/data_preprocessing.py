@@ -15,13 +15,13 @@ def train_preprocessing(data_x, data_y, feature_names):
 
     if not isinstance(data_y, (np.ndarray, np.generic)):
         data_y = np.asarray(data_y)
-    if len(data_y.shape) != 1:
-        if data_y.shape[0] == 1:
-            data_y = data_y[0, :]
-        elif data_y.shape[1] == 1:
-            data_y = data_y[:, 0]
-        else:
-            raise ValueError('data_y dimension should be 1 or (n, 1) or (1, n)')
+    # if len(data_y.shape) != 1:
+    #     if data_y.shape[0] == 1:
+    #         data_y = data_y[0, :]
+    #     elif data_y.shape[1] == 1:
+    #         data_y = data_y[:, 0]
+    #     else:
+    #         raise ValueError('data_y dimension should be 1 or (n, 1) or (1, n)')
     data_len = data_y.shape[0]
 
     if not isinstance(data_x, (np.ndarray, np.generic)):
