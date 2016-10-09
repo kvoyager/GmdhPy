@@ -1,4 +1,4 @@
-# GmdhPy: Multilayered iterational algorithm of the Group Method of Data Handling for Python
+# GmdhPy: Multilayered iterative algorithm of the Group Method of Data Handling for Python
 
 GmdhPy is the Python library with implementation of iterational group method of data handling algorithm with polynomial reference functions.
 The resulting models are also known as polynomial neural networks. GMDH as one of the earliest [deep learning methods](http://www.sciencedirect.com/science/article/pii/S0893608014002135).
