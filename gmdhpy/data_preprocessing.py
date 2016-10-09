@@ -15,6 +15,10 @@ def train_preprocessing(data_x, data_y, feature_names):
 
     if not isinstance(data_y, (np.ndarray, np.generic)):
         data_y = np.asarray(data_y)
+
+    if len(data_y.shape) == 1:
+        data_y = data_y.reshape(data_y.shape[0], 1)
+
     # if len(data_y.shape) != 1:
     #     if data_y.shape[0] == 1:
     #         data_y = data_y[0, :]

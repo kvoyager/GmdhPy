@@ -1,16 +1,8 @@
 import sys
 from gmdhpy.polynom import PolynomModel
-
 #***********************************************************************************************************************
 #   GMDH layer
 #***********************************************************************************************************************
-class LayerCreationError(Exception):
-    """raised when error happens while layer creation
-    """
-    def __init__(self, message, layer_index):
-        # Call the base class constructor with the parameters it needs
-        super(LayerCreationError, self).__init__(message)
-        self.layer_index = layer_index
 
 
 class Layer(list):

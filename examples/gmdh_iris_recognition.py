@@ -57,19 +57,19 @@ if __name__ == '__main__':
     if train_data_is_the_first_half:
         train_x = data[:n]
         train_y = target[:n]
-        exam_x = data[n:]
-        exam_y = target[n:]
+        test_x = data[n:]
+        test_y = target[n:]
     else:
         train_x = data[n:]
         train_y = target[n:]
-        exam_x = data[:n]
-        exam_y = target[:n]
+        test_x = data[:n]
+        test_y = target[:n]
 
     svm_clf = svm.SVC(kernel='linear')
     svm_clf.fit(train_x, train_y)
 
     gmdh = MultilayerGMDH(ref_functions=('linear_cov',),
-                          criterion_type='test_bias',
+                          criterion_type='validate_bias',
                           feature_names=iris.feature_names,
                           criterion_minimum_width=5,
                           admix_features=True,
@@ -83,17 +83,17 @@ if __name__ == '__main__':
 
     # Now predict the value of the second half:
     # predict with GMDH
-    pred_y_row = gmdh.predict(exam_x)
+    pred_y_row = gmdh.predict(test_x)
 
     # predict with SVM
-    #pred_y_row = svm_clf.predict(exam_x)
+    #pred_y_row = svm_clf.predict(test_x)
 
     pred_y = viris_class(pred_y_row)
 
     fig = plt.figure()
 
     # Compute confusion matrix
-    cm = confusion_matrix(exam_y, pred_y)
+    cm = confusion_matrix(test_y, pred_y)
     np.set_printoptions(precision=2)
     print('Confusion matrix, without normalization')
     print(cm)
