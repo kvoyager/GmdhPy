@@ -22,7 +22,8 @@ class Layer(list):
     def add_polynomial_model(self, gmdh, index_u1, index_u2, ftype):
         """Add polynomial model to the layer
         """
-        self.add(PolynomModel(gmdh, self.layer_index, index_u1, index_u2, ftype, len(self)))
+        self.add(PolynomModel(gmdh, self.layer_index, index_u1, index_u2,
+                              ftype, len(self), gmdh.param.model_type))
 
     def __repr__(self):
         st = '*********************************************\n'

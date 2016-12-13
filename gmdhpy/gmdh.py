@@ -161,6 +161,7 @@ class MultilayerGMDHparam(object):
         self.print_debug = True
         self.n_jobs = 1
         self.keep_partial_models = False
+        self.model_type = None
 
     @classmethod
     def dummy_set_custom_sequence_type(cls, seq_types):
@@ -175,7 +176,7 @@ class BaseMultilayerGMDH(object):
     def __init__(self, seq_type, set_custom_seq_type, ref_functions, criterion_type, feature_names, max_layer_count,
                  admix_features, manual_best_models_selection, min_best_models_count, max_best_models_count,
                  criterion_minimum_width, stop_train_epsilon_condition, normalize, layer_err_criterion, alpha,
-                 print_debug, keep_partial_models, n_jobs):
+                 print_debug, keep_partial_models, model_type, n_jobs):
         self.param = MultilayerGMDHparam()                  # parameters
         self.param.seq_type = SequenceTypeSet.get(seq_type)
         if set_custom_seq_type is not None:
@@ -203,6 +204,7 @@ class BaseMultilayerGMDH(object):
         self.param.alpha = alpha
         self.param.print_debug = print_debug
         self.keep_partial_models = keep_partial_models
+        self.param.model_type = model_type
         self.fit_params = {}
 
         if isinstance(n_jobs, six.string_types):
@@ -346,13 +348,13 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                  admix_features=True, manual_best_models_selection=False, min_best_models_count=5,
                  max_best_models_count=10000000, criterion_minimum_width=5,
                  stop_train_epsilon_condition=0.001, normalize=True, layer_err_criterion='top', alpha=0.5,
-                 print_debug=True, keep_partial_models=False, n_jobs=1):
+                 print_debug=True, keep_partial_models=False, model_type='polynom', n_jobs=1):
         super(self.__class__, self).__init__(seq_type, set_custom_seq_type,
                  ref_functions,
                  criterion_type, feature_names, max_layer_count,
                  admix_features, manual_best_models_selection, min_best_models_count, max_best_models_count,
                  criterion_minimum_width, stop_train_epsilon_condition, normalize, layer_err_criterion, alpha,
-                 print_debug, keep_partial_models, n_jobs)
+                 print_debug, keep_partial_models, model_type, n_jobs)
 
     def __repr__(self):
         st = '*********************************************\n'
@@ -530,7 +532,8 @@ class MultilayerGMDH(BaseMultilayerGMDH):
             for j in range(0, min(len(layer), layer.l_count)):
                 # loop for selected best models
                 model = layer[j]
-                models_output.append(model.transform(x))
+                y = model.transform(x)
+                models_output.append(y)
 
             if self.param.admix_features:
                 # if parameter admix_features set to true we need to add original features to

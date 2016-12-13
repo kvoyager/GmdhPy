@@ -77,26 +77,28 @@ class Polynom(object):
         self.ftype = ftype
         self.fw_size = 0
         self.set_type(ftype)
-        self.w = None
 
-    def _transfer_linear(self, u1, u2, w):
+    def _apply(self, x):
+        raise NotImplementedError
+
+    def _transfer_linear(self, u1, u2):
         x = np.array([np.ones(u1.shape[0]), u1, u2])
-        return np.dot(x.T, w.T)
+        return self._apply(x)
 
-    def _transfer_linear_cov(self, u1, u2, w):
+    def _transfer_linear_cov(self, u1, u2):
         x = np.array([np.ones(u1.shape[0]), u1, u2, u1*u2])
-        return np.dot(x.T, w.T)
+        return self._apply(x)
 
-    def _transfer_quadratic(self, u1, u2, w):
+    def _transfer_quadratic(self, u1, u2):
         x = np.array([np.ones(u1.shape[0]), u1, u2, u1*u2, u1*u1, u2*u2])
-        return np.dot(x.T, w.T)
+        return self._apply(x)
 
-    def _transfer_cubic(self, u1, u2, w):
+    def _transfer_cubic(self, u1, u2):
         u1_sq = u1 * u1
         u2_sq = u2 * u2
         x = np.array([np.ones(u1.shape[0]), u1, u2, u1*u2, u1_sq, u2_sq,
                       u1_sq*u1, u1_sq*u2, u2_sq*u1, u2_sq*u2])
-        return np.dot(x.T, w.T)
+        return self._apply(x)
 
     def set_type(self, new_type):
         self.ref_function_type = new_type
@@ -115,7 +117,6 @@ class Polynom(object):
         else:
             raise NotImplementedError
 
-
     def transform(self, x):
         if len(x.shape) == 2:
             x1 = x[:, self.u1_index]
@@ -123,18 +124,50 @@ class Polynom(object):
         else:
             x1 = x[self.u1_index]
             x2 = x[self.u2_index]
-        y = self.transfer(x1, x2, self.w)
+        y = self.transfer(x1, x2)
         return y
 
+    def fit(self, alpha, a, y):
+        raise NotImplementedError
+
+
+class LinearPolynom(Polynom):
+    def fit(self, alpha, a, y):
+        y_components = get_y_components(y)
+        a2 = a[:, 1:]
+        clf = linear_model.Ridge(alpha=alpha, solver='lsqr')
+        clf.fit(a2, y)
+        self.w = np.concatenate([clf.intercept_.reshape(y_components, 1), clf.coef_], axis=1)
+
+    def _apply(self, x):
+        return np.dot(x.T, self.w.T)
+
+
+class PLSPolynom(Polynom):
+    def fit(self, alpha, a, y):
+        y_components = get_y_components(y)
+        a2 = a[:, 1:]
+        self.pls = PLSRegression(n_components=y_components)
+        self.pls.fit(a2, y)
+
+    def _apply(self, x):
+        y = self.pls.transform(x.T[:, 1:])
+        return y
 
 class PolynomModel(Model):
     """Polynomial GMDH model class
     """
 
-    def __init__(self, gmdh, layer_index, u1_index, u2_index, ftype, model_index):
+    def __init__(self, gmdh, layer_index, u1_index, u2_index, ftype, model_index, model_type):
         super(PolynomModel, self).__init__(gmdh, layer_index, u1_index, u2_index, model_index)
-        self.f = Polynom(layer_index, u1_index, u2_index, ftype)
-        self.fm = Polynom(layer_index, u1_index, u2_index, ftype)
+        if model_type.lower() == 'polynom':
+            self.f = LinearPolynom(layer_index, u1_index, u2_index, ftype)
+            self.fm = LinearPolynom(layer_index, u1_index, u2_index, ftype)
+        elif model_type.lower() == 'pls':
+            self.f = PLSPolynom(layer_index, u1_index, u2_index, ftype)
+            self.fm = PLSPolynom(layer_index, u1_index, u2_index, ftype)
+        else:
+            raise NotImplementedError
 
     def get_name(self):
         if self.f.ftype == RefFunctionType.rfLinear:
@@ -203,7 +236,7 @@ class PolynomModel(Model):
         # Train the model using train and test sets
         try:
             set_matrix_a(self.f.ftype, self.u1_index, self.u2_index, train_x, train_y, a, ya)
-            self.f.w = train_model(alpha, a, ya)
+            self.f.fit(alpha, a, ya)
             rank_a = 10
             pass
         except:
@@ -212,7 +245,7 @@ class PolynomModel(Model):
         if self.need_bias_stuff():
             try:
                 set_matrix_a(self.fm.ftype, self.u1_index, self.u2_index, validate_x, validate_y, b, yb)
-                self.fm.w = train_model(alpha, b, yb)
+                self.fm.fit(alpha, b, yb)
                 rank_b = 10
             except:
                 raise LayerCreationError('Error training model on train data set', self.layer_index)
