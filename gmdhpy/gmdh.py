@@ -438,6 +438,9 @@ class MultilayerGMDH(BaseMultilayerGMDH):
                  criterion_minimum_width, stop_train_epsilon_condition, normalize, layer_err_criterion, alpha,
                  print_debug, keep_partial_models, n_jobs)
 
+    def __str__(self):
+        return "Self-organizing neural network - GMDH"
+
     def __repr__(self):
         st = '*********************************************\n'
         s = st
@@ -1059,7 +1062,7 @@ class MultilayerGMDH(BaseMultilayerGMDH):
         """
         s = ''
         for n, index in enumerate(features_set):
-            if len(self.feature_names) > 0:
+            if self.feature_names is not None and len(self.feature_names) > 0:
                 s += '{0}'.format(self.feature_names[index])
                 if n < len(features_set)-1:
                     s += ', '

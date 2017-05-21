@@ -220,7 +220,7 @@ class Model(object):
     def get_features_name(self, input_index):
         if self.layer_index == 0:
             s = 'index=inp_{0}'.format(input_index)
-            if len(self.feature_names) > 0:
+            if self.feature_names is not None and len(self.feature_names) > 0:
                 s += ', {0}'.format(self.feature_names[input_index])
         else:
             models_num = len(self.layers[self.layer_index-1])
@@ -228,7 +228,7 @@ class Model(object):
                 s = 'index=prev_layer_model_{0}'.format(input_index)
             else:
                 s = 'index=inp_{0}'.format(input_index - models_num)
-                if len(self.feature_names) > 0:
+                if self.feature_names is not None and len(self.feature_names) > 0:
                     s += ', {0}'.format(self.feature_names[input_index - models_num])
         return s
 
