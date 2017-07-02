@@ -1,341 +1,82 @@
 digraph {
-	graph [center=true fontsize=18 label="Multilayered group method of data handling model
+	graph [center=true fontsize=18 label="Self-organizing deep learning polynomial neural network
  " labelloc=t]
 		OUTPUT [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
 		subgraph {
-			"F0
-CRIM" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F1
-ZN" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F2
-INDUS" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F3
-CHAS" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F4
-NOX" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F5
-RM" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F6
-AGE" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F7
-DIS" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F8
-RAD" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F9
-TAX" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F10
-PTRATIO" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F11
-B" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			"F12
-LSTAT" [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F0 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F1 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F2 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F3 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F4 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F5 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F6 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F7 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+			F8 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
 		}
 		subgraph {
 			"layer 0
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-			"layer 0
-model 1
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-			"layer 0
-model 2
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
 		subgraph {
 			"layer 1
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-			"layer 1
-model 1
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-			"layer 1
-model 2
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
 		subgraph {
 			"layer 2
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-			"layer 2
-model 1
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-			"layer 2
-model 2
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
 		subgraph {
 			"layer 3
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-			"layer 3
-model 1
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
 		subgraph {
 			"layer 4
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-			"layer 4
-model 1
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
 		}
-		subgraph {
-			"layer 5
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-			"layer 5
-model 1
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 6
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 7
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 8
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 9
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 10
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 11
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 12
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 13
-model 0
-linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-			"F5
-RM" -> "layer 0
-model 0
+			F5 -> "layer 0
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F12
-LSTAT" -> "layer 0
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F10
-PTRATIO" -> "layer 0
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F12
-LSTAT" -> "layer 0
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F5
-RM" -> "layer 0
-model 2
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F9
-TAX" -> "layer 0
-model 2
+			F7 -> "layer 0
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 0
-model 0
+neuron 0
 linear cov" -> "layer 1
-model 0
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F10
-PTRATIO" -> "layer 1
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 0
-model 0
-linear cov" -> "layer 1
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 0
-model 1
-linear cov" -> "layer 1
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 0
-model 2
-linear cov" -> "layer 1
-model 2
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F12
-LSTAT" -> "layer 1
-model 2
+			F0 -> "layer 1
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 1
-model 1
+neuron 0
 linear cov" -> "layer 2
-model 0
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F8
-RAD" -> "layer 2
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 1
-model 0
-linear cov" -> "layer 2
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F8
-RAD" -> "layer 2
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 1
-model 2
-linear cov" -> "layer 2
-model 2
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F8
-RAD" -> "layer 2
-model 2
+			F6 -> "layer 2
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 2
-model 0
+neuron 0
 linear cov" -> "layer 3
-model 0
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 2
-model 2
-linear cov" -> "layer 3
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 2
-model 1
-linear cov" -> "layer 3
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 2
-model 2
-linear cov" -> "layer 3
-model 1
+			F1 -> "layer 3
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 3
-model 1
+neuron 0
 linear cov" -> "layer 4
-model 0
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F7
-DIS" -> "layer 4
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 3
-model 0
-linear cov" -> "layer 4
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F8
-RAD" -> "layer 4
-model 1
+			F4 -> "layer 4
+neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
 			"layer 4
-model 1
-linear cov" -> "layer 5
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F7
-DIS" -> "layer 5
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 4
-model 0
-linear cov" -> "layer 5
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F4
-NOX" -> "layer 5
-model 1
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 5
-model 0
-linear cov" -> "layer 6
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 5
-model 1
-linear cov" -> "layer 6
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 6
-model 0
-linear cov" -> "layer 7
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F0
-CRIM" -> "layer 7
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 7
-model 0
-linear cov" -> "layer 8
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F8
-RAD" -> "layer 8
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 8
-model 0
-linear cov" -> "layer 9
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F1
-ZN" -> "layer 9
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 9
-model 0
-linear cov" -> "layer 10
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F8
-RAD" -> "layer 10
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 10
-model 0
-linear cov" -> "layer 11
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F0
-CRIM" -> "layer 11
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 11
-model 0
-linear cov" -> "layer 12
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F8
-RAD" -> "layer 12
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 12
-model 0
-linear cov" -> "layer 13
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"F4
-NOX" -> "layer 13
-model 0
-linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 13
-model 0
+neuron 0
 linear cov" -> OUTPUT [color="#cde8ef" fillcolor="#3499cd" weight=1]
 }
