@@ -532,8 +532,6 @@ class BaseSONN(object):
                 break
 
         if self.valid:
-#             self.layer_err.resize((len(self.layers),))
-#             self.train_layer_err.resize((len(self.layers),))
             self.layer_err.resize((len(self.layers),), refcheck=False)
             self.train_layer_err.resize((len(self.layers),), refcheck=False)
             for i in range(0, len(self.layers)):
