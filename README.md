@@ -27,7 +27,7 @@ sudo pip uninstall gmdhpy
 ## Documentation
 ### Regression
 ```py
-from gmdh import Regressor
+from gmdhpy.gmdh import Regressor
 model = Regressor()
 model.fit(data_x, data_y)
 predict_y = model.predict(test_x)
@@ -41,7 +41,7 @@ data_x will be splitted to train and validate inside fitting
 
 or
 ```py
-from gmdh import Regressor
+from gmdhpy.gmdh import Regressor
 model = Regressor()
 model.fit(train_x, train_y, validation_data=(validate_x, validate_y))
 predict_y = model.predict(test_x)
@@ -56,7 +56,7 @@ where
 
 ### Classification
 ```py
-from gmdh import Classifier
+from gmdhpy.gmdh import Classifier
 model = Classifier()
 model.fit(data_x, data_y)
 ```
