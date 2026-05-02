@@ -4,10 +4,12 @@ import numpy as np
 import pandas as pd
 from enum import Enum
 
+
 class SequenceTypeSet(Enum):
     """
     Divide data set to train and validate class, see MultilayerGMDHparam class for explanation
     """
+
     sqMode1 = 1
     sqMode2 = 2
     sqMode3_1 = 3
@@ -18,14 +20,22 @@ class SequenceTypeSet(Enum):
 
     @classmethod
     def is_mode1_type(cls, seq_type):
-        if seq_type == cls.sqMode1 or seq_type == cls.sqMode3_1 or seq_type == cls.sqMode4_1:
+        if (
+            seq_type == cls.sqMode1
+            or seq_type == cls.sqMode3_1
+            or seq_type == cls.sqMode4_1
+        ):
             return True
         else:
             return False
 
     @classmethod
     def is_mode2_type(cls, seq_type):
-        if seq_type == cls.sqMode2 or seq_type == cls.sqMode3_2 or seq_type == cls.sqMode4_2:
+        if (
+            seq_type == cls.sqMode2
+            or seq_type == cls.sqMode3_2
+            or seq_type == cls.sqMode4_2
+        ):
             return True
         else:
             return False
@@ -34,19 +44,19 @@ class SequenceTypeSet(Enum):
     def get(arg):
         if isinstance(arg, SequenceTypeSet):
             return arg
-        elif arg == 'mode1':
+        elif arg == "mode1":
             return SequenceTypeSet.sqMode1
-        elif arg == 'mode2':
+        elif arg == "mode2":
             return SequenceTypeSet.sqMode2
-        elif arg == 'mode3_1':
+        elif arg == "mode3_1":
             return SequenceTypeSet.sqMode3_1
-        elif arg == 'mode3_2':
+        elif arg == "mode3_2":
             return SequenceTypeSet.sqMode3_2
-        elif arg == 'mode4_1':
+        elif arg == "mode4_1":
             return SequenceTypeSet.sqMode4_1
-        elif arg == 'mode4_2':
+        elif arg == "mode4_2":
             return SequenceTypeSet.sqMode4_2
-        elif arg == 'random':
+        elif arg == "random":
             return SequenceTypeSet.sqRandom
         else:
             raise ValueError(arg)
@@ -61,10 +71,10 @@ def train_preprocessing(data_x, data_y, feature_names):
     """process of train input data: transform to numpy matrix, transpose etc"""
 
     if isinstance(data_x, pd.DataFrame):
-        data_x = data_x.as_matrix()
+        data_x = data_x.to_numpy()
 
     if isinstance(data_y, pd.DataFrame) or isinstance(data_y, pd.Series):
-        data_y = data_y.as_matrix()
+        data_y = data_y.to_numpy()
 
     if not isinstance(data_y, (np.ndarray, np.generic)):
         data_y = np.asarray(data_y)
@@ -74,15 +84,17 @@ def train_preprocessing(data_x, data_y, feature_names):
         elif data_y.shape[1] == 1:
             data_y = data_y[:, 0]
         else:
-            raise ValueError('data_y dimension should be 1 or (n, 1) or (1, n)')
+            raise ValueError("data_y dimension should be 1 or (n, 1) or (1, n)")
     data_len = data_y.shape[0]
 
     if not isinstance(data_x, (np.ndarray, np.generic)):
         data_x = np.asarray(data_x)
 
     if len(data_x.shape) != 2:
-        raise ValueError('data_x dimension has to be 2. it has to be a 2D numpy array: number of features x '
-                         'number of observations')
+        raise ValueError(
+            "data_x dimension has to be 2. it has to be a 2D numpy array: number of features x "
+            "number of observations"
+        )
 
     if data_x.shape[0] != data_len:
         # try to check if transpose matrix is suitable
@@ -90,18 +102,22 @@ def train_preprocessing(data_x, data_y, feature_names):
             # ok, need to transpose data_x
             data_x = data_x.transpose()
         else:
-            raise ValueError('number of examples in data_x is not equal to number of examples in data_y')
+            raise ValueError(
+                "number of examples in data_x is not equal to number of examples in data_y"
+            )
 
     if data_x.shape[1] < 2:
-        raise ValueError('Error: number of features should be not less than two')
+        raise ValueError("Error: number of features should be not less than two")
 
     if data_x.shape[0] < 2:
-        raise ValueError('Error: number of samples should be not less than two')
+        raise ValueError("Error: number of samples should be not less than two")
 
     if feature_names is not None:
         feature_names_len = len(feature_names)
         if feature_names_len > 0 and feature_names_len != data_x.shape[1]:
-            raise ValueError('Error: size of feature_names list is not equal to number of features')
+            raise ValueError(
+                "Error: size of feature_names list is not equal to number of features"
+            )
 
     return data_x, data_y
 
@@ -110,14 +126,16 @@ def predict_preprocessing(data_x, n_features):
     """process of predict input data: transform to numpy matrix, transpose etc"""
 
     if isinstance(data_x, pd.DataFrame):
-        data_x = data_x.as_matrix()
+        data_x = data_x.to_numpy()
 
     if not isinstance(data_x, (np.ndarray, np.generic)):
         data_x = np.asarray(data_x)
 
     if len(data_x.shape) != 2:
-        raise ValueError('data_x dimension has to be 2. it has to be a 2D numpy array: number of features x '
-                         'number of observations')
+        raise ValueError(
+            "data_x dimension has to be 2. it has to be a 2D numpy array: number of features x "
+            "number of observations"
+        )
 
     if data_x.shape[1] != n_features:
         # try to check if transpose matrix is suitable
@@ -125,7 +143,9 @@ def predict_preprocessing(data_x, n_features):
             # ok, need to transpose data_x
             data_x = data_x.transpose()
         else:
-            raise ValueError('number of features in data_x is not equal to number of features in trained model')
+            raise ValueError(
+                "number of features in data_x is not equal to number of features in trained model"
+            )
 
     data_len = data_x.shape[0]
     return data_x, data_len
@@ -155,27 +175,28 @@ def set_split_types(seq_type, data_len):
     elif seq_type == SequenceTypeSet.sqMode4_2:
         n = 4
     else:
-        raise ValueError('Unknown type of data division into train and validate sequences')
+        raise ValueError(
+            "Unknown type of data division into train and validate sequences"
+        )
 
     if SequenceTypeSet.is_mode1_type(seq_type):
         for i in range(data_len, 0, -1):
-            if (data_len-i) % n == 0:
-                seq_types[i-1] = DataSetType.dsValidate
+            if (data_len - i) % n == 0:
+                seq_types[i - 1] = DataSetType.dsValidate
             else:
-                seq_types[i-1] = DataSetType.dsTrain
+                seq_types[i - 1] = DataSetType.dsTrain
 
     if SequenceTypeSet.is_mode2_type(seq_type):
         for i in range(data_len, 0, -1):
-            if (data_len-i) % n == 0:
-                seq_types[i-1] = DataSetType.dsTrain
+            if (data_len - i) % n == 0:
+                seq_types[i - 1] = DataSetType.dsTrain
             else:
-                seq_types[i-1] = DataSetType.dsValidate
+                seq_types[i - 1] = DataSetType.dsValidate
     return seq_types
 
 
 def split_dataset(data_x, data_y, seq_type):
-    """Split train and validate data sets from input data set and target
-    """
+    """Split train and validate data sets from input data set and target"""
     data_len = data_x.shape[0]
 
     seq_types = set_split_types(seq_type, data_len)

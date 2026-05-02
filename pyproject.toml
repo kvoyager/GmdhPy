@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "GmdhPy"
+version = "2.1"
+description = "Self-organizing deep learning polynomial neural network for Python (Multilayered group method of data handling)"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+requires-python = ">=3.10"
+authors = [
+    { name = "kvoyager", email = "10786475+kvoyager@users.noreply.github.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "numpy",
+    "scikit-learn",
+    "pandas",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+graphviz = ["graphviz"]
+
+[project.urls]
+Homepage = "https://github.com/kvoyager/GmdhPy"
+Repository = "https://github.com/kvoyager/GmdhPy"
+Issues = "https://github.com/kvoyager/GmdhPy/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gmdhpy"]
+
+[tool.hatch.envs.default]
+dependencies = ["pytest"]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+cov = "pytest --cov=gmdhpy {args:tests}"
+
+[tool.hatch.envs.test]
+dependencies = ["pytest"]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["3.10", "3.11", "3.12", "3.13"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["*TestCase"]
+python_functions = ["test_*"]

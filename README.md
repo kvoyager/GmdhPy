@@ -7,21 +7,29 @@ The resulting models are also known self-organizing deep learning polynomial neu
 GmdhPy uses the following dependencies:
 
 - numpy
-- six
 - scikit-learn
+- pandas
 - matplotlib (optional, required if you use plotting tools)
 - graphviz (optional but recommended if you want to plot model graph, requires installation of binaries from http://www.graphviz.org/ as well)
 
 To install GmdhPy:
 
 ```
-sudo pip install git+git://github.com/kvoyager/GmdhPy.git
+pip install git+git://github.com/kvoyager/GmdhPy.git
 ```
+
+To install with graphviz support (required for `gmdhpy.plot_model.PlotModel`):
+
+```
+pip install "gmdhpy[graphviz] @ git+git://github.com/kvoyager/GmdhPy.git"
+```
+
+Note: the `graphviz` extra installs the Python wrapper only. You also need the Graphviz binaries from http://www.graphviz.org/ on your `PATH`.
 
 To uninstall GmdhPy:
 
 ```
-sudo pip uninstall gmdhpy
+pip uninstall gmdhpy
 ```
 
 ## Documentation
@@ -51,7 +59,7 @@ where
 * train_x - train data, numpy array shape [num_train_samples, num_features]
 * train_y - train target values, numpy array of shape [num_train_samples]
 * validate_x - validate data, numpy array shape [num_validate_samples, num_features]
-* validate_y - validate target values, numpy array of shape [num_vaidate_samples]
+* validate_y - validate target values, numpy array of shape [num_validate_samples]
 * test_x - test data, numpy array of shape [num_test_samples, num_feature]
 
 ### Classification
@@ -71,7 +79,7 @@ predicted_lables = model.predict(test_x)
 ```
 where
 * predicted_scores - predicted probabilities of classes (scores)
-* predicted_lables - predcited class labels
+* predicted_labels - predicted class labels
 
 Note: only binary classification is supported
 
@@ -201,6 +209,21 @@ params = {
     'n_jobs': 4
 }
 model = Regressor(**params)
+```
+
+## Citation
+
+If you use GmdhPy in your research, please cite it as:
+
+```bibtex
+@software{kolokolov_gmdhpy_2015,
+  author    = {Kolokolov, Konstantin},
+  title     = {{GmdhPy}: A {Python} Implementation of the Group Method of Data Handling ({GMDH})},
+  year      = {2015},
+  version   = {2.1},
+  url       = {https://github.com/kvoyager/GmdhPy},
+  note      = {GitHub repository}
+}
 ```
 
 ## License

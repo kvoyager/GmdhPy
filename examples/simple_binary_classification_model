@@ -1,82 +1,82 @@
 digraph {
 	graph [center=true fontsize=18 label="Self-organizing deep learning polynomial neural network
  " labelloc=t]
-		OUTPUT [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-		subgraph {
-			F0 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			F1 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			F2 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			F3 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			F4 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			F5 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			F6 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			F7 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-			F8 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
-		}
-		subgraph {
-			"layer 0
+	OUTPUT [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+	{
+		F0 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+		F1 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+		F2 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+		F3 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+		F4 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+		F5 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+		F6 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+		F7 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+		F8 [color="#f89939" fillcolor="#ff9c34" fontcolor=white fontsize=12 rank=same style=filled]
+	}
+	{
+		"layer 0
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 1
+	}
+	{
+		"layer 1
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 2
+	}
+	{
+		"layer 2
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 3
+	}
+	{
+		"layer 3
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-		subgraph {
-			"layer 4
+	}
+	{
+		"layer 4
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#cde8ef" fontsize=10 shape=rect style=filled]
-		}
-			F5 -> "layer 0
+	}
+	F5 -> "layer 0
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			F7 -> "layer 0
+	F7 -> "layer 0
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 0
+	"layer 0
 neuron 0
 linear cov" -> "layer 1
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			F0 -> "layer 1
+	F0 -> "layer 1
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 1
+	"layer 1
 neuron 0
 linear cov" -> "layer 2
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			F6 -> "layer 2
+	F6 -> "layer 2
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 2
+	"layer 2
 neuron 0
 linear cov" -> "layer 3
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			F1 -> "layer 3
+	F1 -> "layer 3
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 3
+	"layer 3
 neuron 0
 linear cov" -> "layer 4
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			F4 -> "layer 4
+	F4 -> "layer 4
 neuron 0
 linear cov" [color="#cde8ef" fillcolor="#3499cd" weight=1]
-			"layer 4
+	"layer 4
 neuron 0
 linear cov" -> OUTPUT [color="#cde8ef" fillcolor="#3499cd" weight=1]
 }
