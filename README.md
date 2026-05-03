@@ -220,7 +220,7 @@ If you use GmdhPy in your research, please cite it as:
   author    = {Kolokolov, Konstantin},
   title     = {{GmdhPy}: A {Python} Implementation of the Group Method of Data Handling ({GMDH})},
   year      = {2015},
-  version   = {2.1},
+  version   = {2.1.1},
   url       = {https://github.com/kvoyager/GmdhPy},
   note      = {GitHub repository}
 }
