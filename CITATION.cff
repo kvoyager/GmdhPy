@@ -13,6 +13,7 @@ repository-code: "https://github.com/kvoyager/GmdhPy"
 url: "https://github.com/kvoyager/GmdhPy"
 license: MIT
 version: "2.1.1"
+doi: "10.5281/zenodo.19991776"
 date-released: "2015-01-01"
 keywords:
   - gmdh
@@ -36,5 +37,6 @@ preferred-citation:
       given-names: Konstantin
   year: 2015
   version: "2.1.1"
+  doi: "10.5281/zenodo.19991776"
   url: "https://github.com/kvoyager/GmdhPy"
   notes: "GitHub repository"

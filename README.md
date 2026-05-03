@@ -1,4 +1,7 @@
 ## GmdhPy
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19991776.svg)](https://doi.org/10.5281/zenodo.19991776)
+
 GmdhPy is the Python library with implementation of iterational group method of data handling algorithm with polynomial reference functions.
 The resulting models are also known self-organizing deep learning polynomial neural network. It is one of the earliest [deep learning methods](http://www.sciencedirect.com/science/article/pii/S0893608014002135).
 
@@ -221,6 +224,7 @@ If you use GmdhPy in your research, please cite it as:
   title     = {{GmdhPy}: A {Python} Implementation of the Group Method of Data Handling ({GMDH})},
   year      = {2015},
   version   = {2.1.1},
+  doi       = {10.5281/zenodo.19991776},
   url       = {https://github.com/kvoyager/GmdhPy},
   note      = {GitHub repository}
 }
