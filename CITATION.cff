@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "GmdhPy: A Python Implementation of the Group Method of Data Handling (GMDH)"
+abstract: >-
+  Self-organizing deep learning polynomial neural network for Python,
+  also known as multilayered group method of data handling (GMDH).
+type: software
+authors:
+  - family-names: Kolokolov
+    given-names: Konstantin
+    email: k10786475+kvoyager@users.noreply.github.com
+repository-code: "https://github.com/kvoyager/GmdhPy"
+url: "https://github.com/kvoyager/GmdhPy"
+license: MIT
+version: "2.1.1"
+date-released: "2015-01-01"
+keywords:
+  - gmdh
+  - group-method-of-data-handling
+  - polynomial-neural-network
+  - self-organizing
+  - neural-networks
+  - machine-learning
+  - regression
+  - classification
+  - python
+  - time-series
+  - forecasting
+  - feature-selection
+  - inductive-learning
+preferred-citation:
+  type: software
+  title: "GmdhPy: A Python Implementation of the Group Method of Data Handling (GMDH)"
+  authors:
+    - family-names: Kolokolov
+      given-names: Konstantin
+  year: 2015
+  version: "2.1.1"
+  url: "https://github.com/kvoyager/GmdhPy"
+  notes: "GitHub repository"

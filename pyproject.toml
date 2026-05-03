@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "GmdhPy"
-version = "2.1"
+version = "2.1.1"
 description = "Self-organizing deep learning polynomial neural network for Python (Multilayered group method of data handling)"
 readme = "README.md"
 license = "MIT"
