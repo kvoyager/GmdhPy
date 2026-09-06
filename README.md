@@ -5,6 +5,13 @@
 GmdhPy is the Python library with implementation of iterational group method of data handling algorithm with polynomial reference functions.
 The resulting models are also known self-organizing deep learning polynomial neural network. It is one of the earliest [deep learning methods](http://www.sciencedirect.com/science/article/pii/S0893608014002135).
 
+> [!NOTE]
+> A modern PyTorch reimplementation of this algorithm is available as [TorchSONN](https://github.com/kvoyager/torchsonn), 
+> adding GPU acceleration, orthogonal-polynomial (Legendre and Chebyshev) reference functions, multi-input neurons, 
+> end-to-end gradient fine-tuning, and support for both regression and classification. 
+> TorchSONN reaches results competitive with published benchmarks on standard regression tasks while keeping 
+> the interpretable, self-organizing structure of GMDH. If you are starting a new project, 
+> TorchSONN is the recommended, actively developed version.
 ## Installation
 
 GmdhPy uses the following dependencies:
